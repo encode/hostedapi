@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-if [[ "${CONTINUOUS_INTEGRATION}" == "true" ]]; then
+if [[ "${CONTINUOUS_INTEGRATION}" = "true" ]]; then
     BIN_PATH=""
 else
     rm -rf venv
