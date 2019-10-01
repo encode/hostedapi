@@ -1,0 +1,3 @@
+#!/bin/sh -ex
+
+git push heroku master
