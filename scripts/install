@@ -1,1 +1,11 @@
-echo "Installed"
+#!/bin/sh -e
+
+if [[ "${CONTINUOUS_INTEGRATION}" == "true" ]]; then
+    BIN_PATH=""
+else
+    rm -rf venv
+    virtualenv venv --python=python3.7
+    BIN_PATH="venv/bin"
+fi
+
+${BIN_PATH}/pip install -U -r requirements.txt
