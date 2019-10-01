@@ -14,3 +14,16 @@ as mature as building out a service with Django or Flask might be.
 I don't want to make too much of a public commitment about where this project
 will end up going just yet, but I'll be sharing whatever progress I make on it
 on the [Encode website](https://www.encode.io/).
+
+## Production Environment
+
+The service is deployed to http://hostedapi.herokuapp.com/
+
+## Local Development
+
+To install and run the application:
+
+```shell
+$ ./scripts/install
+$ ./scripts/run
+```
