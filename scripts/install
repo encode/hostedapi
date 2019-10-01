@@ -1,11 +1,11 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 
-if [[ "${CONTINUOUS_INTEGRATION}" == "true" ]]; then
+if [ "${CONTINUOUS_INTEGRATION}" = "true" ]; then
     BIN_PATH=""
 else
     rm -rf venv
     virtualenv venv --python=python3.7
-    BIN_PATH="venv/bin"
+    BIN_PATH="venv/bin/"
 fi
 
-${BIN_PATH}/pip install -U -r requirements.txt
+${BIN_PATH}pip install -U -r requirements.txt
