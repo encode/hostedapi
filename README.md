@@ -12,8 +12,7 @@ roadblocks openly without trying to hide away any points that might not yet be
 as mature as building out a service with Django or Flask might be.
 
 I don't want to make too much of a public commitment about where this project
-will end up going just yet, but I'll be sharing whatever progress I make on it
-on the [Encode website](https://www.encode.io/).
+will end up going just yet, but I'm keeping a [progress log here](https://github.com/encode/hostedapi.com/blob/master/PROGRESS.md) to help share the learnings along the way.
 
 ## Production Environment
 
