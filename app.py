@@ -3,15 +3,26 @@ from starlette.config import Config
 from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+import sentry_sdk
 import uvicorn
 
 
 config = Config()
 DEBUG = config("DEBUG", cast=bool, default=False)
+SENTRY_DSN = config("DEBUG", cast=str, default="")
+
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN)
+
 
 templates = Jinja2Templates(directory="templates")
 
 app = Starlette(debug=DEBUG)
+
+if SENTRY_DSN:
+    app.add_middleware(SentryAsgiMiddleware)
+
 app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 

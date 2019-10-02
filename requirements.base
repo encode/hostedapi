@@ -10,8 +10,9 @@ aiofiles==0.4.*
 jinja2==2.*
 starlette==0.12.*
 uvicorn==0.9.*
+sentry-sdk==0.12.*
 
 # Testing (For consistency we still want to install these to production tho.)
-black==19.*
+black
 pytest==5.*
 requests==2.*
