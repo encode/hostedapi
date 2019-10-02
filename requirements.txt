@@ -2,3 +2,7 @@ aiofiles
 jinja2
 starlette
 uvicorn
+
+# Testing
+pytest
+requests
