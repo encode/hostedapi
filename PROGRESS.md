@@ -69,3 +69,7 @@ Together with our `DEBUG` behavior this now means that:
 
 * Errors when developing locally will display the traceback.
 * Errors on the production site will render the 500 error page, and will trigger an event in Sentry.
+
+## Automatic deploys
+
+* Setup Heroku's deploy from GitHub, for auto deploys after Pull Requests are merged to master.
