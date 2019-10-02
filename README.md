@@ -20,6 +20,11 @@ The service is deployed to http://hostedapi.herokuapp.com/
 
 ## Local Development
 
+Requirements:
+
+* Install [Python 3.7](https://www.python.org/downloads/)
+* Install [the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+
 To install and run the application:
 
 ```shell
