@@ -4,5 +4,6 @@ starlette
 uvicorn
 
 # Testing
+black
 pytest
 requests

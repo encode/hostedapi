@@ -5,20 +5,20 @@ from starlette.templating import Jinja2Templates
 import uvicorn
 
 
-templates = Jinja2Templates(directory='templates')
+templates = Jinja2Templates(directory="templates")
 
 app = Starlette(debug=True)
-app.mount('/static', StaticFiles(directory='statics'), name='static')
+app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
-@app.route('/')
+@app.route("/")
 async def homepage(request):
     template = "index.html"
     context = {"request": request}
     return templates.TemplateResponse(template, context)
 
 
-@app.route('/error')
+@app.route("/error")
 async def error(request):
     """
     An example error. Switch the `debug` setting to see either tracebacks or 500 pages.
