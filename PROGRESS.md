@@ -50,7 +50,7 @@ Any time `requirements.base` is updated in any way I'll run `./scripts/install -
 
 We also pin the Python runtime in Heroku, using the `runtime.txt` file.
 
-## Environment Variables for config
+## Environment Variables for config.
 
 * Read config from the environment rather than hardcoded.
 * Switch to running locally using `heroku local` so that our .env file is being loaded
