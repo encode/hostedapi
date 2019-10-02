@@ -6,5 +6,4 @@ else
     BIN_PATH="venv/bin/"
 fi
 
-scripts/lint --check
-PYTHONPATH=. ${BIN_PATH}pytest tests
+${BIN_PATH}black app.py tests ${@}
