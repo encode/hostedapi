@@ -1,26 +1,22 @@
 from starlette.applications import Starlette
-from starlette.config import Config
 from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+from source import settings
 import sentry_sdk
 import uvicorn
 
 
-config = Config()
-DEBUG = config("DEBUG", cast=bool, default=False)
-SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")
-
-if SENTRY_DSN:
-    sentry_sdk.init(dsn=SENTRY_DSN)
+if settings.SENTRY_DSN:
+    sentry_sdk.init(dsn=settings.SENTRY_DSN)
 
 
 templates = Jinja2Templates(directory="templates")
 
-app = Starlette(debug=DEBUG)
+app = Starlette(debug=settings.DEBUG)
 
-if SENTRY_DSN:
+if settings.SENTRY_DSN:
     app.add_middleware(SentryAsgiMiddleware)
 
 app.mount("/static", StaticFiles(directory="statics"), name="static")
