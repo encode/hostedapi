@@ -13,8 +13,9 @@ if ! [ -f .env ] ; then
 fi
 
 if [ "$1" = "--update" ]; then
+    rm -f requirements.txt
     ${BIN_PATH}pip install -U -r requirements.base
-    scripts/freeze
+    ${BIN_PATH}pip freeze > requirements.txt
 else
     ${BIN_PATH}pip install -U -r requirements.txt
 fi
