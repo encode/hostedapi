@@ -1,0 +1,17 @@
+# We include the major version number of packages here for API stability.
+# When adding, removing, or updating a requirement here you should install a
+# clean set of packages and freeze the versions by running this command:
+#
+# `./scripts/install --update`
+
+
+# Application
+aiofiles==0.4.*
+jinja2==2.*
+starlette==0.12.*
+uvicorn==0.9.*
+
+# Testing (For consistency we still want to install these to production tho.)
+black==19.*
+pytest==5.*
+requests==2.*

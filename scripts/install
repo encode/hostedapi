@@ -8,4 +8,9 @@ else
     BIN_PATH="venv/bin/"
 fi
 
-${BIN_PATH}pip install -U -r requirements.txt
+if [ "$1" = "--update" ]; then
+    ${BIN_PATH}pip install -U -r requirements.base
+    scripts/freeze
+else
+    ${BIN_PATH}pip install -U -r requirements.txt
+fi
