@@ -4,12 +4,14 @@ from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings
+import subprocess
 import sentry_sdk
 import uvicorn
 
 
 if settings.SENTRY_DSN:
-    sentry_sdk.init(dsn=settings.SENTRY_DSN)
+    git_revision = subprocess.run(["git", "rev-parse", "HEAD"]).stdout
+    sentry_sdk.init(dsn=settings.SENTRY_DSN, release=git_revision)
 
 
 templates = Jinja2Templates(directory="templates")
