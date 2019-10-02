@@ -7,4 +7,4 @@ else
 fi
 
 scripts/lint --check
-PYTHONPATH=. ${BIN_PATH}pytest tests
+PYTHONPATH=source ${BIN_PATH}pytest tests
