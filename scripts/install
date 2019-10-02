@@ -8,6 +8,10 @@ else
     BIN_PATH="venv/bin/"
 fi
 
+if ! [ -f .env ] ; then
+    echo "DEBUG=true" > .env
+fi
+
 if [ "$1" = "--update" ]; then
     ${BIN_PATH}pip install -U -r requirements.base
     scripts/freeze
