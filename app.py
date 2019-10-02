@@ -7,7 +7,7 @@ import uvicorn
 
 
 config = Config()
-DEBUG = config('DEBUG', cast=bool, default=False)
+DEBUG = config("DEBUG", cast=bool, default=False)
 
 templates = Jinja2Templates(directory="templates")
 
