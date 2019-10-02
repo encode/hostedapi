@@ -26,3 +26,15 @@ To install and run the application:
 $ ./scripts/install
 $ ./scripts/run
 ```
+
+Run the lint checks and test suite:
+
+```shell
+$ ./scripts/test
+```
+
+Apply code formatting:
+
+```shell
+$ ./scripts/lint
+```
