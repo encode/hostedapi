@@ -22,8 +22,8 @@ The service is deployed to http://hostedapi.herokuapp.com/
 
 Requirements:
 
-* Install [Python 3.7](https://www.python.org/downloads/)
-* Install [the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* [Python 3.7](https://www.python.org/downloads/)
+* [The Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 
 To install and run the application:
 
