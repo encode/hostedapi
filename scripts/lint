@@ -6,4 +6,4 @@ else
     BIN_PATH="venv/bin/"
 fi
 
-${BIN_PATH}black app.py tests ${@}
+${BIN_PATH}black source tests ${@}
