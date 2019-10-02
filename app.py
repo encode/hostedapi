@@ -10,7 +10,7 @@ import uvicorn
 
 config = Config()
 DEBUG = config("DEBUG", cast=bool, default=False)
-SENTRY_DSN = config("DEBUG", cast=str, default="")
+SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")
 
 if SENTRY_DSN:
     sentry_sdk.init(dsn=SENTRY_DSN)
