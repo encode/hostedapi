@@ -2,6 +2,7 @@
 
 * `scripts/install` - Install the application and any dependencies.
 * `scripts/test` - Run the test suite.
+* `scripts/lint` - Apply code linting.
 * `scripts/run` - Start the application running locally.
 * `scripts/deploy` - Deploy to production.
 
