@@ -1,13 +1,17 @@
 from starlette.applications import Starlette
+from starlette.config import Config
 from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 import uvicorn
 
 
+config = Config()
+DEBUG = config("DEBUG", cast=bool, default=False)
+
 templates = Jinja2Templates(directory="templates")
 
-app = Starlette(debug=True)
+app = Starlette(debug=DEBUG)
 app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
