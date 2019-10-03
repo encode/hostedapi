@@ -49,7 +49,7 @@ def sort_by_ordering(
 def get_column_controls(
     url: URL, names: typing.List[str], column: typing.Optional[str], is_reverse: bool
 ) -> typing.List[ColumnControl]:
-    controls = [ColumnControl(id="", text="#")]
+    controls = []
     for name in names:
         column_id = name.lower().replace(" ", "_")
 
