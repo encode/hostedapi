@@ -45,7 +45,7 @@
           <thead>
             <tr>
               {% for control in column_controls %}
-              <th scope="col" {% if control.is_reverse %}class="dropup"{% endif %}>
+              <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
                 {% if control.url %}
                   <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
                 {% endif %}
@@ -63,12 +63,12 @@
           <tbody>
             {% for item in queryset %}
             <tr>
-              <th scope="row">{{ item[0] }}</th>
-              <td>{{ item[1] }}</td>
-              <td>{{ item[2] }}</td>
-              <td>{{ item[3] }}</td>
-              <td>{{ item[4] }}</td>
-              <td>{{ item[5] }}</td>
+              <th scope="row">{{ item.pk }}</th>
+              <td>{{ item.constituency }}</td>
+              <td>{{ item.surname }}</td>
+              <td>{{ item.first_name }}</td>
+              <td>{{ item.party }}</td>
+              <td>{{ item.votes }}</td>
             </tr>
             {% endfor %}
           </tbody>
