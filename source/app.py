@@ -21,10 +21,55 @@ if settings.SENTRY_DSN:  # pragma: nocover
 app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
+class User:
+    def __init__(self, pk, first, last, handle):
+        self.pk = pk
+        self.first = first
+        self.last = last
+        self.handle = handle
+
+
+class ColumnControl:
+    def __init__(self, text, url=None, is_sorted=False, is_reverse=False):
+        self.text = text
+        self.url = url
+        self.is_sorted = is_sorted
+        self.is_reverse = is_reverse
+
+
+class PageControl:
+    def __init__(self, text, url=None, is_active=False, is_disabled=False):
+        self.text = text
+        self.url = url
+        self.is_active = is_active
+        self.is_disabled = is_disabled
+
+
 @app.route("/")
 async def homepage(request):
-    template = "index.html"
-    context = {"request": request, "settings": settings}
+    template = "table.html"
+    context = {
+        "request": request,
+        "queryset": [
+            User(pk=0, first="Mark", last="Otto", handle="@mdo"),
+            User(pk=1, first="Jacob", last="Thornton", handle="@fat"),
+            User(pk=2, first="Larry", last="The Bird", handle="@twitter"),
+        ],
+        "search_term": "",
+        "column_controls": [
+            ColumnControl(text="#"),
+            ColumnControl(text="First", url="#"),
+            ColumnControl(text="Last", url="#"),
+            ColumnControl(text="Handle", url="#"),
+        ],
+        "page_controls": [
+            PageControl(text="Previous", is_disabled=True),
+            PageControl(text="1", is_active=True, url="#"),
+            PageControl(text="2", url="#"),
+            PageControl(text="3", url="#"),
+            PageControl(text="Next", url="#"),
+        ],
+    }
     return templates.TemplateResponse(template, context)
 
 
