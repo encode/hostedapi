@@ -9,7 +9,7 @@ import uvicorn
 
 
 if settings.SENTRY_DSN:
-    sentry_sdk.init(dsn=settings.SENTRY_DSN, release=settings.GIT_REVISION)
+    sentry_sdk.init(dsn=settings.SENTRY_DSN, release=settings.RELEASE_VERSION)
 
 
 templates = Jinja2Templates(directory="templates")
@@ -26,7 +26,6 @@ app.mount("/static", StaticFiles(directory="statics"), name="static")
 async def homepage(request):
     template = "index.html"
     context = {"request": request, "settings": settings}
-    print(settings.DEBUG, settings.GIT_REVISION)
     return templates.TemplateResponse(template, context)
 
 
