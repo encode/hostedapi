@@ -15,7 +15,7 @@
       <div class="col-md-6">
           <form class="form-inline" target=".">
           <div class="input-group mb-3" style="width: 100%">
-            <input name="search" value="{{ search_term }}" type="search" class="form-control" aria-label="Search" aria-describedby="button-search">
+            <input name="search" {% if search_term %}value="{{ search_term }}"{% endif %} type="search" class="form-control" aria-label="Search" aria-describedby="button-search">
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="submit" id="button-search">Search</button>
             </div>

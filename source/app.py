@@ -3,7 +3,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import datasource, settings, pagination, ordering
+from source import datasource, settings, pagination, ordering, search
 import sentry_sdk
 import math
 
@@ -30,20 +30,32 @@ async def homepage(request):
 
     queryset = datasource.DATA_SOURCE_WITH_INDEX
 
+    # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
     order_column, is_reverse = ordering.get_ordering(
         url=request.url, allowed_column_ids=ALLOWED_COLUMN_IDS
     )
+    search_term = search.get_search_term(url=request.url)
 
+    # Filter by any search term
+    queryset = search.filter_by_search_term(
+        queryset, search_term=search_term, attributes=ALLOWED_COLUMN_IDS
+    )
+
+    # Determine pagination info
     total_pages = max(math.ceil(len(queryset) / PAGE_SIZE), 1)
     current_page = max(min(current_page, total_pages), 1)
     offset = (current_page - 1) * PAGE_SIZE
 
+    # Perform column ordering
     queryset = ordering.sort_by_ordering(
         queryset, column=order_column, is_reverse=is_reverse
     )
+
+    #  Perform pagination
     queryset = queryset[offset : offset + PAGE_SIZE]
 
+    # Get pagination and column controls to render on the page
     column_controls = ordering.get_column_controls(
         url=request.url, names=COLUMN_NAMES, column=order_column, is_reverse=is_reverse
     )
@@ -51,11 +63,12 @@ async def homepage(request):
         url=request.url, current_page=current_page, total_pages=total_pages
     )
 
+    # Render the page
     template = "table.html"
     context = {
         "request": request,
         "queryset": queryset,
-        "search_term": "",
+        "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
     }
