@@ -3,8 +3,9 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import settings
+from source import datasource, settings, pagination
 import sentry_sdk
+import math
 
 
 if settings.SENTRY_DSN:  # pragma: nocover
@@ -19,14 +20,6 @@ if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
 
 app.mount("/static", StaticFiles(directory="statics"), name="static")
-
-
-class User:
-    def __init__(self, pk, first, last, handle):
-        self.pk = pk
-        self.first = first
-        self.last = last
-        self.handle = handle
 
 
 class ColumnControl:
@@ -47,28 +40,35 @@ class PageControl:
 
 @app.route("/")
 async def homepage(request):
+    PAGE_SIZE = 20
+    queryset = datasource.DATA_SOURCE_WITH_INDEX
+
+    current_page = pagination.get_page_number(url=request.url)
+
+    total_pages = max(math.ceil(len(queryset) / PAGE_SIZE), 1)
+    current_page = max(min(current_page, total_pages), 1)
+
+    offset = (current_page - 1) * PAGE_SIZE
+    queryset = queryset[offset : offset + PAGE_SIZE]
+
+    page_controls = pagination.get_page_controls(
+        url=request.url, current_page=current_page, total_pages=total_pages
+    )
+
     template = "table.html"
     context = {
         "request": request,
-        "queryset": [
-            User(pk=0, first="Mark", last="Otto", handle="@mdo"),
-            User(pk=1, first="Jacob", last="Thornton", handle="@fat"),
-            User(pk=2, first="Larry", last="The Bird", handle="@twitter"),
-        ],
+        "queryset": queryset,
         "search_term": "",
         "column_controls": [
             ColumnControl(text="#"),
-            ColumnControl(text="First", url="#"),
-            ColumnControl(text="Last", url="#"),
-            ColumnControl(text="Handle", url="#"),
+            ColumnControl(text="Constituency", url="#"),
+            ColumnControl(text="Surname", url="#"),
+            ColumnControl(text="First name", url="#"),
+            ColumnControl(text="Party", url="#"),
+            ColumnControl(text="Votes", url="#"),
         ],
-        "page_controls": [
-            PageControl(text="Previous", is_disabled=True),
-            PageControl(text="1", is_active=True, url="#"),
-            PageControl(text="2", url="#"),
-            PageControl(text="3", url="#"),
-            PageControl(text="Next", url="#"),
-        ],
+        "page_controls": page_controls,
     }
     return templates.TemplateResponse(template, context)
 
