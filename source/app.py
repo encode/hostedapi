@@ -3,7 +3,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import datasource, settings, pagination
+from source import datasource, settings, pagination, ordering
 import sentry_sdk
 import math
 
@@ -22,27 +22,31 @@ if settings.SENTRY_DSN:  # pragma: nocover
 app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
-class ColumnControl:
-    def __init__(self, text, url=None, is_sorted=False, is_reverse=False):
-        self.text = text
-        self.url = url
-        self.is_sorted = is_sorted
-        self.is_reverse = is_reverse
-
-
 @app.route("/")
 async def homepage(request):
-    PAGE_SIZE = 20
+    PAGE_SIZE = 10
+    COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
+    ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
+
     queryset = datasource.DATA_SOURCE_WITH_INDEX
 
     current_page = pagination.get_page_number(url=request.url)
+    order_column, is_reverse = ordering.get_ordering(
+        url=request.url, allowed_column_ids=ALLOWED_COLUMN_IDS
+    )
 
     total_pages = max(math.ceil(len(queryset) / PAGE_SIZE), 1)
     current_page = max(min(current_page, total_pages), 1)
-
     offset = (current_page - 1) * PAGE_SIZE
+
+    queryset = ordering.sort_by_ordering(
+        queryset, column=order_column, is_reverse=is_reverse
+    )
     queryset = queryset[offset : offset + PAGE_SIZE]
 
+    column_controls = ordering.get_column_controls(
+        url=request.url, names=COLUMN_NAMES, column=order_column, is_reverse=is_reverse
+    )
     page_controls = pagination.get_page_controls(
         url=request.url, current_page=current_page, total_pages=total_pages
     )
@@ -52,14 +56,7 @@ async def homepage(request):
         "request": request,
         "queryset": queryset,
         "search_term": "",
-        "column_controls": [
-            ColumnControl(text="#"),
-            ColumnControl(text="Constituency", url="#"),
-            ColumnControl(text="Surname", url="#"),
-            ColumnControl(text="First name", url="#"),
-            ColumnControl(text="Party", url="#"),
-            ColumnControl(text="Votes", url="#"),
-        ],
+        "column_controls": column_controls,
         "page_controls": page_controls,
     }
     return templates.TemplateResponse(template, context)

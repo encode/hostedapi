@@ -1,5 +1,17 @@
 # Data for 2017 UK general election.
 # From https://www.electoralcommission.org.uk/who-we-are-and-what-we-do/elections-and-referendums
+from dataclasses import dataclass
+
+
+@dataclass
+class DataItem:
+    pk: int
+    constituency: str
+    surname: str
+    first_name: str
+    party: str
+    votes: int
+
 
 DATA_SOURCE = [
     ("Aldershot", "WALLACE", "Donna Maria", "Green Party", "1090"),
@@ -4346,4 +4358,14 @@ DATA_SOURCE = [
     ("Ynys Môn", "TURNER", "James Nicholas", "UKIP", "624"),
 ]
 
-DATA_SOURCE_WITH_INDEX = [(idx,) + line for idx, line in enumerate(DATA_SOURCE)]
+DATA_SOURCE_WITH_INDEX = [
+    DataItem(
+        pk=idx + 1,
+        constituency=line[0],
+        surname=line[1],
+        first_name=line[2],
+        party=line[3],
+        votes=int(line[4]),
+    )
+    for idx, line in enumerate(DATA_SOURCE)
+]
