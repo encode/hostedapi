@@ -7,4 +7,5 @@ else
 fi
 
 scripts/lint --check
-PYTHONPATH=. ${BIN_PATH}pytest tests --cov=source --cov=tests --cov-fail-under=100 --cov-report=term-missing
+PYTHONPATH=. ${BIN_PATH}pytest tests -W ignore::DeprecationWarning --cov=source --cov=tests --cov-report=
+${BIN_PATH}coverage report --fail-under=100 --show-missing
