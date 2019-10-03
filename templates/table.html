@@ -3,15 +3,17 @@
 {% block content %}
 <main role="main">
   <div class="container">
+    <!--
     <div class="row pt-3">
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ url_for('homepage') }}">Admin</a></li>
           <li class="breadcrumb-item active">Users</li>
         </ol>
-        </nav>
-      </div>
-    <div class="row">
+      </nav>
+    </div>
+    -->
+    <div class="row pt-3">
       <div class="col-md-6">
           <form class="form-inline" target=".">
           <div class="input-group mb-3" style="width: 100%">
@@ -35,7 +37,7 @@
             <a class="dropdown-item" href="#">CSV</a>
           </div>
         </div>-->
-        <button class="btn btn-outline-primary" type="button" id="button-addon2">Add Row</button>
+        <!-- <button class="btn btn-outline-primary" type="button" id="button-addon2">Add Row</button> -->
       </div>
       </div>
     </div>
@@ -63,7 +65,7 @@
           <tbody>
             {% for item in queryset %}
             <tr>
-              <th scope="row">{{ item.pk }}</th>
+              <!--<th scope="row">{{ item.pk }}</th>-->
               <td>{{ item.constituency }}</td>
               <td>{{ item.surname }}</td>
               <td>{{ item.first_name }}</td>

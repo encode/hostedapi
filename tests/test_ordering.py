@@ -95,7 +95,6 @@ def test_get_column_controls_no_current_selection():
     controls = get_column_controls(url, names, column=None, is_reverse=False)
 
     assert controls == [
-        ColumnControl(id="", text="#"),
         ColumnControl(
             id="username",
             text="Username",
@@ -121,7 +120,6 @@ def test_get_column_controls_forward_current_selection():
     controls = get_column_controls(url, names, column="username", is_reverse=False)
 
     assert controls == [
-        ColumnControl(id="", text="#"),
         ColumnControl(
             id="username",
             text="Username",
@@ -149,7 +147,6 @@ def test_get_column_controls_reverse_current_selection():
     )
 
     assert controls == [
-        ColumnControl(id="", text="#"),
         ColumnControl(
             id="username",
             text="Username",
