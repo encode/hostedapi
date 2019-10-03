@@ -5,7 +5,6 @@ from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings
 import sentry_sdk
-import uvicorn
 
 
 if settings.SENTRY_DSN:

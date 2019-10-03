@@ -1,6 +1,10 @@
 dist: xenial
 language: python
 
+branches:
+  only:
+    - master
+
 cache: pip
 
 python:
