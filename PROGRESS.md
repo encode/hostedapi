@@ -73,3 +73,26 @@ Together with our `DEBUG` behavior this now means that:
 ## Automatic deploys
 
 * Setup Heroku's deploy from GitHub, for auto deploys after Pull Requests are merged to master.
+
+# Day 3
+
+## Pass release version to Sentry
+
+* Install the "Dyno Metadata" extenstion on Heroku to populate environment variables with release info.
+* Pass the `HEROKU_RELEASE_VERSION` when instantiating the Sentry SDK.
+
+## Configure the GitHub repo for neater history
+
+Only allow "Squash Merge on pull requests, so that we have a nice neat commit history, with each commit being tied to an associated pull request.
+
+## Render a table with associated pagination and search controls
+
+* Crib from a pre-existing project, to render a table with basic search and pagination controls.
+* Fill our table with a real data source. In this case we're using the results of the 2017 UK general election.
+
+## Fill in basic table functionality
+
+* Enforce 100% test coverage.
+* Implement pagination controls.
+* Implement column ordering controls.
+* Implement search controls.
