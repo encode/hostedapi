@@ -55,13 +55,17 @@ def get_column_controls(
 
         if column != column_id:
             # Column is not selected. Link URL to forward search.
-            linked_url = url.include_query_params(order=column_id)
+            linked_url = url.include_query_params(order=column_id).remove_query_params(
+                "page"
+            )
         elif not is_reverse:
             # Column is selected as a forward search. Link URL to reverse search.
-            linked_url = url.include_query_params(order="-" + column_id)
+            linked_url = url.include_query_params(
+                order="-" + column_id
+            ).remove_query_params("page")
         else:
             # Column is selected as a reverse search. Link URL to remove search.
-            linked_url = url.remove_query_params("order")
+            linked_url = url.remove_query_params("order").remove_query_params("page")
 
         control = ColumnControl(
             id=column_id,
