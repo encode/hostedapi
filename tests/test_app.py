@@ -9,7 +9,7 @@ def test_homepage():
     client = TestClient(app)
     response = client.get("/")
     assert response.status_code == 200
-    assert response.template.name == "index.html"
+    assert response.template.name == "table.html"
 
 
 def test_404_not_found():
