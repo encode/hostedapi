@@ -30,14 +30,6 @@ class ColumnControl:
         self.is_reverse = is_reverse
 
 
-class PageControl:
-    def __init__(self, text, url=None, is_active=False, is_disabled=False):
-        self.text = text
-        self.url = url
-        self.is_active = is_active
-        self.is_disabled = is_disabled
-
-
 @app.route("/")
 async def homepage(request):
     PAGE_SIZE = 20
