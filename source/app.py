@@ -3,7 +3,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import settings
+from source import settings, pagination
 import sentry_sdk
 
 
@@ -37,16 +37,13 @@ class ColumnControl:
         self.is_reverse = is_reverse
 
 
-class PageControl:
-    def __init__(self, text, url=None, is_active=False, is_disabled=False):
-        self.text = text
-        self.url = url
-        self.is_active = is_active
-        self.is_disabled = is_disabled
-
-
 @app.route("/")
 async def homepage(request):
+    current_page = pagination.get_page_number(url=request.url)
+    page_controls = pagination.get_page_controls(
+        url=request.url, current_page=current_page, total_pages=3
+    )
+
     template = "table.html"
     context = {
         "request": request,
@@ -62,13 +59,7 @@ async def homepage(request):
             ColumnControl(text="Last", url="#"),
             ColumnControl(text="Handle", url="#"),
         ],
-        "page_controls": [
-            PageControl(text="Previous", is_disabled=True),
-            PageControl(text="1", is_active=True, url="#"),
-            PageControl(text="2", url="#"),
-            PageControl(text="3", url="#"),
-            PageControl(text="Next", url="#"),
-        ],
+        "page_controls": page_controls,
     }
     return templates.TemplateResponse(template, context)
 
