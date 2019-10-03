@@ -7,7 +7,7 @@ from source import settings
 import sentry_sdk
 
 
-if settings.SENTRY_DSN:
+if settings.SENTRY_DSN:  # pragma: nocover
     sentry_sdk.init(dsn=settings.SENTRY_DSN, release=settings.RELEASE_VERSION)
 
 
@@ -15,7 +15,7 @@ templates = Jinja2Templates(directory="templates")
 
 app = Starlette(debug=settings.DEBUG)
 
-if settings.SENTRY_DSN:
+if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
 
 app.mount("/static", StaticFiles(directory="statics"), name="static")
@@ -28,7 +28,7 @@ async def homepage(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/error")
+@app.route("/500")
 async def error(request):
     """
     An example error. Switch the `debug` setting to see either tracebacks or 500 pages.

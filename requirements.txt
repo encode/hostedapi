@@ -6,6 +6,7 @@ black==19.3b0
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
+coverage==4.5.4
 h11==0.8.1
 httptools==0.0.13
 idna==2.8
@@ -18,6 +19,7 @@ pluggy==0.13.0
 py==1.8.0
 pyparsing==2.4.2
 pytest==5.2.0
+pytest-cov==2.7.1
 requests==2.22.0
 sentry-sdk==0.12.3
 six==1.12.0
