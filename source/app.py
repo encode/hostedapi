@@ -1,4 +1,5 @@
 from starlette.applications import Starlette
+from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
@@ -72,6 +73,20 @@ async def homepage(request):
         "column_controls": column_controls,
         "page_controls": page_controls,
     }
+    return templates.TemplateResponse(template, context)
+
+
+@app.route("/detail/{pk:int}", name="detail")
+async def detail(request):
+    queryset = datasource.DATA_SOURCE_WITH_INDEX
+    try:
+        item = queryset[request.path_params["pk"] - 1]
+    except IndexError:
+        raise HTTPException(status_code=404)
+
+    # Render the page
+    template = "detail.html"
+    context = {"request": request, "item": item}
     return templates.TemplateResponse(template, context)
 
 
