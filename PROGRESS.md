@@ -90,7 +90,7 @@ Only allow "Squash Merge on pull requests, so that we have a nice neat commit hi
 * Crib from a pre-existing project, to render a table with basic search and pagination controls.
 * Fill our table with a real data source. In this case we're using the results of the 2017 UK general election.
 
-## Fill in basic table functionality
+## Fill in basic table functionality
 
 * Enforce 100% test coverage.
 * Implement pagination controls.
