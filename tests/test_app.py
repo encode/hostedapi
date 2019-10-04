@@ -2,12 +2,24 @@ from source.app import app
 from starlette.testclient import TestClient
 
 
-def test_homepage():
+def test_dashboard():
     """
-    Ensure that the homepage renders the 'index.html' template.
+    Ensure that the dashboard renders the 'dashboard.html' template.
     """
     client = TestClient(app)
-    response = client.get("/")
+    url = app.url_path_for("dashboard")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.template.name == "dashboard.html"
+
+
+def test_table():
+    """
+    Ensure that the tabular results render the 'table.html' template.
+    """
+    client = TestClient(app)
+    url = app.url_path_for("table", year=2017)
+    response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "table.html"
 
@@ -17,10 +29,21 @@ def test_detail():
     Ensure that the detail pages renders the 'detail.html' template.
     """
     client = TestClient(app)
-    url = app.url_path_for("detail", pk=1)
+    url = app.url_path_for("detail", year=2017, pk=1)
     response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "detail.html"
+
+
+def test_table_404():
+    """
+    Ensure that tabular pages with an invalid year render the '404.html' template.
+    """
+    client = TestClient(app)
+    url = app.url_path_for("table", year=999)
+    response = client.get(url)
+    assert response.status_code == 404
+    assert response.template.name == "404.html"
 
 
 def test_detail_404():
@@ -28,7 +51,7 @@ def test_detail_404():
     Ensure that detail pages with an invalid PK render the '404.html' template.
     """
     client = TestClient(app)
-    url = app.url_path_for("detail", pk=99999)
+    url = app.url_path_for("detail", year=2017, pk=99999)
     response = client.get(url)
     assert response.status_code == 404
     assert response.template.name == "404.html"

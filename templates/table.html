@@ -6,7 +6,8 @@
     <div class="row pt-3">
       <nav>
         <ol class="breadcrumb">
-          <li class="breadcrumb-item active">UK General Election Results 2017</li>
+          <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          <li class="breadcrumb-item active">UK General Election Results {{ year }}</li>
         </ol>
       </nav>
     </div>
@@ -67,7 +68,7 @@
               <td>{{ item.first_name }}</td>
               <td>{{ item.party }}</td>
               <td>{{ item.votes }}</td>
-              <td><a href="{{ url_for('detail', pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
+              <td><a href="{{ url_for('detail', year=year, pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
             </tr>
             {% endfor %}
           </tbody>
