@@ -23,8 +23,15 @@ if settings.SENTRY_DSN:  # pragma: nocover
 app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
-@app.route("/")
-async def homepage(request):
+@app.route("/", name="dashboard")
+async def dashboard(request):
+    template = "dashboard.html"
+    context = {"request": request}
+    return templates.TemplateResponse(template, context)
+
+
+@app.route("/uk-general-election-2017", name="table")
+async def table(request):
     PAGE_SIZE = 10
     COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
     ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
@@ -76,7 +83,7 @@ async def homepage(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/detail/{pk:int}", name="detail")
+@app.route("/uk-general-election-2017/{pk:int}", name="detail")
 async def detail(request):
     queryset = datasource.DATA_SOURCE_WITH_INDEX
     try:

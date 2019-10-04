@@ -2,12 +2,24 @@ from source.app import app
 from starlette.testclient import TestClient
 
 
-def test_homepage():
+def test_dashboard():
     """
-    Ensure that the homepage renders the 'index.html' template.
+    Ensure that the dashboard renders the 'dashboard.html' template.
     """
     client = TestClient(app)
-    response = client.get("/")
+    url = app.url_path_for("dashboard")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.template.name == "dashboard.html"
+
+
+def test_table():
+    """
+    Ensure that the tabular results render the 'table.html' template.
+    """
+    client = TestClient(app)
+    url = app.url_path_for("table")
+    response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "table.html"
 
