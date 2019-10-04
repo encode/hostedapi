@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main role="main">
+  <div class="container">
+    <div class="row pt-3">
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('homepage') }}">UK General Election Results 2017</a></li>
+          <li class="breadcrumb-item active">{{ item.first_name }} {{ item.surname }}</li>
+        </ol>
+      </nav>
+    </div>
+
+    <div class="row pt-3">
+      <div class="col-md-12">
+        <table class="table">
+          <tbody>
+            <tr>
+              <th>Constituency</th><td>{{ item.constituency }}</td>
+            </tr>
+            <tr>
+              <th>Surname</th><td>{{ item.surname }}</td>
+            </tr>
+            <tr>
+              <th>First name</th><td>{{ item.first_name }}</td>
+            </tr>
+            <tr>
+              <th>Party</th><td>{{ item.party }}</td>
+            </tr>
+            <tr>
+              <th>Votes</th><td>{{ item.votes }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

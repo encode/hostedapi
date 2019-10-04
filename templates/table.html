@@ -3,17 +3,15 @@
 {% block content %}
 <main role="main">
   <div class="container">
-    <!--
     <div class="row pt-3">
       <nav>
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ url_for('homepage') }}">Admin</a></li>
-          <li class="breadcrumb-item active">Users</li>
+          <li class="breadcrumb-item active">UK General Election Results 2017</li>
         </ol>
       </nav>
     </div>
-    -->
-    <div class="row pt-3">
+
+    <div class="row">
       <div class="col-md-6">
           <form class="form-inline" target=".">
           <div class="input-group mb-3" style="width: 100%">
@@ -56,10 +54,8 @@
                   </a>
                 {% endif %}
               </th>
-                <!-- <button class="btn btn-link dropdown-toggle" style="padding: 0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Dropdown button
-              </button> -->
               {% endfor %}
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -71,6 +67,7 @@
               <td>{{ item.first_name }}</td>
               <td>{{ item.party }}</td>
               <td>{{ item.votes }}</td>
+              <td><a href="{{ url_for('detail', pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
             </tr>
             {% endfor %}
           </tbody>
