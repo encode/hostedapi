@@ -96,3 +96,13 @@ Only allow "Squash Merge on pull requests, so that we have a nice neat commit hi
 * Implement pagination controls.
 * Implement column ordering controls.
 * Implement search controls.
+
+# Day 4
+
+## Flesh out site structure
+
+Put in place a basic admin-like site structure...
+
+* Add a top-level dashboard page
+* Add a single-item details page
+* Breadcrumbs interlinking between each layer
