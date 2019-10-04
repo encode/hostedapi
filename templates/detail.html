@@ -7,7 +7,7 @@
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{{ url_for('table') }}">UK General Election Results 2017</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('table', year=year) }}">UK General Election Results {{ year }}</a></li>
           <li class="breadcrumb-item active">{{ item.first_name }} {{ item.surname }}</li>
         </ol>
       </nav>

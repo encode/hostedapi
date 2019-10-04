@@ -30,13 +30,17 @@ async def dashboard(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-2017", name="table")
+@app.route("/uk-general-election-{year:int}", name="table")
 async def table(request):
     PAGE_SIZE = 10
     COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
     ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
 
-    queryset = datasource.DATA_SOURCE_WITH_INDEX
+    year = request.path_params["year"]
+    try:
+        queryset = datasource.DATA_SOURCE[year]
+    except (KeyError, IndexError):
+        raise HTTPException(status_code=404)
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
@@ -76,6 +80,7 @@ async def table(request):
     context = {
         "request": request,
         "queryset": queryset,
+        "year": year,
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
@@ -83,17 +88,18 @@ async def table(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-2017/{pk:int}", name="detail")
+@app.route("/uk-general-election-{year:int}/{pk:int}", name="detail")
 async def detail(request):
-    queryset = datasource.DATA_SOURCE_WITH_INDEX
+    year = request.path_params["year"]
     try:
+        queryset = datasource.DATA_SOURCE[year]
         item = queryset[request.path_params["pk"] - 1]
-    except IndexError:
+    except (KeyError, IndexError):
         raise HTTPException(status_code=404)
 
     # Render the page
     template = "detail.html"
-    context = {"request": request, "item": item}
+    context = {"request": request, "year": year, "item": item}
     return templates.TemplateResponse(template, context)
 
 
