@@ -4,7 +4,8 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import datasource, settings, pagination, ordering, search
+from source import settings, pagination, ordering, search, tables
+import databases
 import sentry_sdk
 import math
 
@@ -15,12 +16,27 @@ if settings.SENTRY_DSN:  # pragma: nocover
 
 templates = Jinja2Templates(directory="templates")
 
+if settings.TESTING:
+    database = databases.Database(settings.TEST_DATABASE_URL, force_rollback=True)
+else:  # pragma: nocover
+    database = databases.Database(settings.DATABASE_URL)
+
 app = Starlette(debug=settings.DEBUG)
 
 if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
 
 app.mount("/static", StaticFiles(directory="statics"), name="static")
+
+
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
 
 
 @app.route("/", name="dashboard")
@@ -37,9 +53,9 @@ async def table(request):
     ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
 
     year = request.path_params["year"]
-    try:
-        queryset = datasource.DATA_SOURCE[year]
-    except (KeyError, IndexError):
+    query = tables.election.select().where(tables.election.c.year == year)
+    queryset = await database.fetch_all(query=query)
+    if not queryset:
         raise HTTPException(status_code=404)
 
     # Get some normalised information from URL query parameters
@@ -91,10 +107,10 @@ async def table(request):
 @app.route("/uk-general-election-{year:int}/{pk:int}", name="detail")
 async def detail(request):
     year = request.path_params["year"]
-    try:
-        queryset = datasource.DATA_SOURCE[year]
-        item = queryset[request.path_params["pk"] - 1]
-    except (KeyError, IndexError):
+    pk = request.path_params["pk"]
+    query = tables.election.select().where(tables.election.c.pk == pk)
+    item = await database.fetch_one(query=query)
+    if item is None:
         raise HTTPException(status_code=404)
 
     # Render the page

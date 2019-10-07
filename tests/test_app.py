@@ -2,66 +2,60 @@ from source.app import app
 from starlette.testclient import TestClient
 
 
-def test_dashboard():
+def test_dashboard(client):
     """
     Ensure that the dashboard renders the 'dashboard.html' template.
     """
-    client = TestClient(app)
     url = app.url_path_for("dashboard")
     response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "dashboard.html"
 
 
-def test_table():
+def test_table(client):
     """
     Ensure that the tabular results render the 'table.html' template.
     """
-    client = TestClient(app)
     url = app.url_path_for("table", year=2017)
     response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "table.html"
 
 
-def test_detail():
+def test_detail(client):
     """
     Ensure that the detail pages renders the 'detail.html' template.
     """
-    client = TestClient(app)
     url = app.url_path_for("detail", year=2017, pk=1)
     response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "detail.html"
 
 
-def test_table_404():
+def test_table_404(client):
     """
     Ensure that tabular pages with an invalid year render the '404.html' template.
     """
-    client = TestClient(app)
     url = app.url_path_for("table", year=999)
     response = client.get(url)
     assert response.status_code == 404
     assert response.template.name == "404.html"
 
 
-def test_detail_404():
+def test_detail_404(client):
     """
     Ensure that detail pages with an invalid PK render the '404.html' template.
     """
-    client = TestClient(app)
     url = app.url_path_for("detail", year=2017, pk=99999)
     response = client.get(url)
     assert response.status_code == 404
     assert response.template.name == "404.html"
 
 
-def test_404_not_found():
+def test_404_not_found(client):
     """
     Ensure that unrouted URLs render the '404.html' template.
     """
-    client = TestClient(app)
     response = client.get("/404")  # This URL does not exist in the application.
     assert response.status_code == 404
     assert response.template.name == "404.html"

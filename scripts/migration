@@ -6,4 +6,4 @@ else
     BIN_PATH="venv/bin/"
 fi
 
-${BIN_PATH}black source tests "${@}"
+PYTHONPATH=. ${BIN_PATH}alembic "${@}"
