@@ -5,6 +5,9 @@ branches:
   only:
     - master
 
+services:
+    - postgresql
+
 cache: pip
 
 python:

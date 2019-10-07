@@ -3,3 +3,4 @@ venv/
 .coverage
 .env
 htmlcov
+sqlite3.db

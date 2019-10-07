@@ -7,13 +7,16 @@
 
 # Application
 aiofiles==0.4.*
+alembic==1.*
+databases[postgresql]==0.2.*
 jinja2==2.*
+sentry-sdk==0.12.*
 starlette==0.12.*
 uvicorn==0.9.*
-sentry-sdk==0.12.*
 
 # Testing (For consistency we still want to install these to production tho.)
 black
 pytest==5.*
 pytest-cov==2.*
 requests==2.*
+sqlalchemy_utils==0.34.*
