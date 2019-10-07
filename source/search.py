@@ -10,7 +10,7 @@ def item_matches_search(
     item: typing.Any, search_term: str, attributes: typing.Sequence[str]
 ) -> bool:
     for attribute in attributes:
-        if search_term in str(getattr(item, attribute)).lower():
+        if search_term in str(item[attribute]).lower():
             return True
 
     return False

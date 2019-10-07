@@ -42,7 +42,7 @@ def sort_by_ordering(
     if column is None:
         return items
 
-    sort_key = lambda item: (getattr(item, column), item.pk)
+    sort_key = lambda item: (item[column], item["pk"])
     return sorted(items, key=sort_key, reverse=is_reverse)
 
 
