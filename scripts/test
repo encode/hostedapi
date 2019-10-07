@@ -1,10 +1,10 @@
 #!/bin/sh -ex
 
-if [ "${CONTINUOUS_INTEGRATION}" = "true" ]; then
+if [ -d "venv" ]; then
+    BIN_PATH="venv/bin/"
+else
     BIN_PATH=""
 else
-    BIN_PATH="venv/bin/"
-fi
 
 scripts/lint --check
 PYTHONPATH=. ${BIN_PATH}pytest tests -W ignore::DeprecationWarning --cov=source --cov=tests --cov-report=
