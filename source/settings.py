@@ -11,6 +11,9 @@ DATABASE_URL = config(
     cast=databases.DatabaseURL,
     default="postgresql://localhost:5432/hostedapi",
 )
+if DATABASE_URL.dialect == 'postgres':
+    DATABASE_URL = DATABASE_URL.replace(dialect="postgresql")  # pragma: nocover
+
 TEST_DATABASE_URL = DATABASE_URL.replace(database="test_" + DATABASE_URL.database)
 
 
