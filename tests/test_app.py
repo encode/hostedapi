@@ -32,6 +32,34 @@ def test_detail(client):
     assert response.template.name == "detail.html"
 
 
+def test_table_with_ordering(client):
+    """
+    Ensure that a column ordering renders a sorted 'table.html' template.
+    """
+    url = app.url_path_for("table", year=2017) + "?order=votes"
+    response = client.get(url)
+    template_queryset = response.context["queryset"]
+    rendered_votes = [item["votes"] for item in template_queryset]
+
+    assert response.status_code == 200
+    assert response.template.name == "table.html"
+    assert rendered_votes == sorted(rendered_votes)
+
+
+def test_table_with_search(client):
+    """
+    Ensure that a column ordering renders a sorted 'table.html' template.
+    """
+    url = app.url_path_for("table", year=2017) + "?search=tatton"
+    response = client.get(url)
+    template_queryset = response.context["queryset"]
+    rendered_constituency = [item["constituency"] for item in template_queryset]
+
+    assert response.status_code == 200
+    assert response.template.name == "table.html"
+    assert all([constituency == "Tatton" for constituency in rendered_constituency])
+
+
 def test_table_404(client):
     """
     Ensure that tabular pages with an invalid year render the '404.html' template.

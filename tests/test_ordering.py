@@ -39,51 +39,54 @@ def test_order_by_invalid_column():
 
 
 @dataclass
-class ExampleItem:
+class ExampleRecord:
     pk: int
     username: str
     email: str
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
 
 def test_sort_by_ordering():
     queryset = [
-        ExampleItem(0, username="tom", email="tom@example.com"),
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
     ]
     sorted_queryset = sort_by_ordering(queryset, column="username", is_reverse=False)
     assert sorted_queryset == [
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
-        ExampleItem(0, username="tom", email="tom@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
     ]
 
 
 def test_sort_by_reverse_ordering():
     queryset = [
-        ExampleItem(0, username="tom", email="tom@example.com"),
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
     ]
     sorted_queryset = sort_by_ordering(queryset, column="username", is_reverse=True)
     assert sorted_queryset == [
-        ExampleItem(0, username="tom", email="tom@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
     ]
 
 
 def test_sort_without_ordering():
     queryset = [
-        ExampleItem(0, username="tom", email="tom@example.com"),
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
     ]
     sorted_queryset = sort_by_ordering(queryset, column=None, is_reverse=False)
     assert sorted_queryset == [
-        ExampleItem(0, username="tom", email="tom@example.com"),
-        ExampleItem(1, username="lucy", email="lucy@example.com"),
-        ExampleItem(2, username="mia", email="mia@example.com"),
+        ExampleRecord(0, username="tom", email="tom@example.com"),
+        ExampleRecord(1, username="lucy", email="lucy@example.com"),
+        ExampleRecord(2, username="mia", email="mia@example.com"),
     ]
 
 
