@@ -4,7 +4,7 @@ if [ -d "venv" ]; then
     BIN_PATH="venv/bin/"
 else
     BIN_PATH=""
-else
+fi
 
 scripts/lint --check
 PYTHONPATH=. ${BIN_PATH}pytest tests -W ignore::DeprecationWarning --cov=source --cov=tests --cov-report=

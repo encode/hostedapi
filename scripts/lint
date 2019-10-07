@@ -4,6 +4,6 @@ if [ -d "venv" ]; then
     BIN_PATH="venv/bin/"
 else
     BIN_PATH=""
-else
+fi
 
 ${BIN_PATH}black source tests "${@}"
