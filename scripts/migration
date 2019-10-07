@@ -1,9 +1,9 @@
 #!/bin/sh -ex
 
-if [ "${CONTINUOUS_INTEGRATION}" = "true" ]; then
-    BIN_PATH=""
-else
+if [ -d "venv" ]; then
     BIN_PATH="venv/bin/"
+else
+    BIN_PATH=""
 fi
 
 PYTHONPATH=. ${BIN_PATH}alembic "${@}"
