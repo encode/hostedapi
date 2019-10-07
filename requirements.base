@@ -7,9 +7,8 @@
 
 # Application
 aiofiles==0.4.*
-aiosqlite==0.10.*
 alembic==1.*
-databases==0.2.*
+databases[postgresql]==0.2.*
 jinja2==2.*
 sentry-sdk==0.12.*
 starlette==0.12.*
