@@ -24,7 +24,7 @@ Requirements:
 
 * [Python 3.7](https://www.python.org/downloads/)
 * [The Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
-* [Postgres](https://www.postgresql.org/download/) (For Mac, I'd recommend [Postgres.app](https://postgresapp.com/)
+* [Postgres](https://www.postgresql.org/download/) (For Mac, I'd recommend [Postgres.app](https://postgresapp.com/))
 
 To install and run the application:
 
