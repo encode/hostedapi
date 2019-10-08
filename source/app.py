@@ -151,12 +151,29 @@ async def detail(request):
 
     if request.method == "POST":
         data = await request.form()
-        return RedirectResponse(url=request.url, status_code=303)
+        record, error = Record.validate_or_error(data)
+        if not error:
+            query = tables.election.update().where(tables.election.c.pk == pk)
+            values = dict(record)
+            await database.execute(query=query, values=values)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        data = item
+        error = None
+        status_code = 200
 
     # Render the page
     template = "detail.html"
-    context = {"request": request, "year": year, "pk": pk, "item": item}
-    return templates.TemplateResponse(template, context)
+    context = {
+        "request": request,
+        "year": year,
+        "pk": pk,
+        "item": item,
+        "data": data,
+        "error": error,
+    }
+    return templates.TemplateResponse(template, context, status_code=status_code)
 
 
 @app.route(

@@ -56,7 +56,7 @@ def test_invalid_create(client):
 
 def test_valid_create(client):
     """
-    Test an invalid row create.
+    Test an valid row create.
     """
     url = app.url_path_for("table", year=2017)
     data = {
@@ -73,12 +73,37 @@ def test_valid_create(client):
     assert URL(response.headers["location"]).path == expected_redirect
 
 
-def test_edit(client):
+def test_invalid_edit(client):
+    """
+    Test an invalid row edit.
+    """
+    url = app.url_path_for("detail", year=2017, pk=1)
+    data = {
+        "constituency": "",
+        "surname": "WALLACE",
+        "first_name": "Donna Maria",
+        "party": "Green Party",
+        "votes": 1090,
+    }
+    response = client.post(url, data=data, allow_redirects=False)
+
+    assert response.status_code == 400
+    assert response.context["error"]["constituency"] == "Must not be blank."
+
+
+def test_valid_edit(client):
     """
     Test row edit.
     """
     url = app.url_path_for("detail", year=2017, pk=1)
-    response = client.post(url, allow_redirects=False)
+    data = {
+        "constituency": "Aldershot",
+        "surname": "WALLACE",
+        "first_name": "Donna Maria",
+        "party": "Green Party",
+        "votes": 1090,
+    }
+    response = client.post(url, data=data, allow_redirects=False)
     expected_redirect = url
 
     assert response.is_redirect
