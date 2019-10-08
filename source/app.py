@@ -1,7 +1,7 @@
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
@@ -115,8 +115,27 @@ async def detail(request):
 
     # Render the page
     template = "detail.html"
-    context = {"request": request, "year": year, "item": item}
+    context = {"request": request, "year": year, "pk": pk, "item": item}
     return templates.TemplateResponse(template, context)
+
+
+@app.route(
+    "/uk-general-election-{year:int}/{pk:int}/delete",
+    methods=["POST"],
+    name="delete-row",
+)
+async def delete_row(request):
+    year = request.path_params["year"]
+    pk = request.path_params["pk"]
+    query = tables.election.select().where(tables.election.c.pk == pk)
+    item = await database.fetch_one(query=query)
+    if item is None:
+        raise HTTPException(status_code=404)
+
+    query = tables.election.delete().where(tables.election.c.pk == pk)
+    await database.execute(query=query)
+    url = request.url_for("table", year=year)
+    return RedirectResponse(url=url, status_code=303)
 
 
 @app.route("/500")
