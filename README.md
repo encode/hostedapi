@@ -24,11 +24,15 @@ Requirements:
 
 * [Python 3.7](https://www.python.org/downloads/)
 * [The Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* [Postgres](https://www.postgresql.org/download/) (For Mac, I'd recommend [Postgres.app](https://postgresapp.com/)
 
 To install and run the application:
 
+Create a new database 'hostedapi', then:
+
 ```shell
 $ ./scripts/install
+$ ./scripts/migration upgrade head
 $ ./scripts/run
 ```
 
