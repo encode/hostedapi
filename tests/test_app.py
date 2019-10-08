@@ -1,4 +1,5 @@
 from source.app import app
+from starlette.datastructures import URL
 from starlette.testclient import TestClient
 
 
@@ -32,6 +33,48 @@ def test_detail(client):
     assert response.template.name == "detail.html"
 
 
+# Actions
+
+
+def test_create(client):
+    """
+    Test row create.
+    """
+    url = app.url_path_for("table", year=2017)
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = app.url_path_for("table", year=2017)
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+def test_edit(client):
+    """
+    Test row edit.
+    """
+    url = app.url_path_for("detail", year=2017, pk=1)
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+def test_delete(client):
+    """
+    Test row delete.
+    """
+    url = app.url_path_for("delete-row", year=2017, pk=1)
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = app.url_path_for("table", year=2017)
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+# Filters
+
+
 def test_table_with_ordering(client):
     """
     Ensure that a column ordering renders a sorted 'table.html' template.
@@ -60,6 +103,9 @@ def test_table_with_search(client):
     assert all([constituency == "Tatton" for constituency in rendered_constituency])
 
 
+# Error handler cases
+
+
 def test_table_404(client):
     """
     Ensure that tabular pages with an invalid year render the '404.html' template.
@@ -76,6 +122,16 @@ def test_detail_404(client):
     """
     url = app.url_path_for("detail", year=2017, pk=99999)
     response = client.get(url)
+    assert response.status_code == 404
+    assert response.template.name == "404.html"
+
+
+def test_delete_404(client):
+    """
+    Ensure that delete pages with an invalid PK render the '404.html' template.
+    """
+    url = app.url_path_for("delete-row", year=2017, pk=99999)
+    response = client.post(url)
     assert response.status_code == 404
     assert response.template.name == "404.html"
 

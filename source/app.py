@@ -1,7 +1,7 @@
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
@@ -41,12 +41,20 @@ async def shutdown():
 
 @app.route("/", name="dashboard")
 async def dashboard(request):
+    rows = []
+    for year in (2017, 2015):
+        text = f"UK General Election Results {year}"
+        url = request.url_for("table", year=year)
+        query = tables.election.count().where(tables.election.c.year == year)
+        count = await database.fetch_val(query)
+        rows.append({"text": text, "url": url, "count": count})
+
     template = "dashboard.html"
-    context = {"request": request}
+    context = {"request": request, "rows": rows}
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-{year:int}", name="table")
+@app.route("/uk-general-election-{year:int}", methods=["GET", "POST"], name="table")
 async def table(request):
     PAGE_SIZE = 10
     COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
@@ -57,6 +65,10 @@ async def table(request):
     queryset = await database.fetch_all(query=query)
     if not queryset:
         raise HTTPException(status_code=404)
+
+    if request.method == "POST":
+        data = await request.form()
+        return RedirectResponse(url=request.url, status_code=303)
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
@@ -104,7 +116,9 @@ async def table(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-{year:int}/{pk:int}", name="detail")
+@app.route(
+    "/uk-general-election-{year:int}/{pk:int}", methods=["GET", "POST"], name="detail"
+)
 async def detail(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
@@ -113,10 +127,33 @@ async def detail(request):
     if item is None:
         raise HTTPException(status_code=404)
 
+    if request.method == "POST":
+        data = await request.form()
+        return RedirectResponse(url=request.url, status_code=303)
+
     # Render the page
     template = "detail.html"
-    context = {"request": request, "year": year, "item": item}
+    context = {"request": request, "year": year, "pk": pk, "item": item}
     return templates.TemplateResponse(template, context)
+
+
+@app.route(
+    "/uk-general-election-{year:int}/{pk:int}/delete",
+    methods=["POST"],
+    name="delete-row",
+)
+async def delete_row(request):
+    year = request.path_params["year"]
+    pk = request.path_params["pk"]
+    query = tables.election.select().where(tables.election.c.pk == pk)
+    item = await database.fetch_one(query=query)
+    if item is None:
+        raise HTTPException(status_code=404)
+
+    query = tables.election.delete().where(tables.election.c.pk == pk)
+    await database.execute(query=query)
+    url = request.url_for("table", year=year)
+    return RedirectResponse(url=url, status_code=303)
 
 
 @app.route("/500")
