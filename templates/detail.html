@@ -16,7 +16,7 @@
     <div class="row">
       <div class="col-md-12">
         <div style="float: right">
-        <button class="btn btn-outline-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#editModal"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Row</button>
+        <!--<button class="btn btn-outline-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#editModal"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Row</button>-->
         <button class="btn btn-outline-danger" type="button" id="button-addon2" data-toggle="modal" data-target="#deleteModal"><span class="oi oi-x" title="icon name" aria-hidden="true"></span>
  Delete Row</button>
       </div>
@@ -40,7 +40,7 @@
               <th>Party</th><td>{{ item.party }}</td>
             </tr>
             <tr>
-              <th>Votes</th><td>{{ item.votes }}</td>
+              <th>Votes</th><td>{{ "{:,}".format(item.votes) }}</td>
             </tr>
           </tbody>
         </table>
@@ -79,7 +79,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form>
+      <form action="{{ request.url }}" method="POST">
       <div class="modal-body">
         <div class="pr-3">
         <div class="form-group row">
@@ -105,7 +105,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
+        <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
       </div>
       </form>
     </div>

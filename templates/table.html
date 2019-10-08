@@ -25,18 +25,7 @@
       </div>
       <div class="col-md-6">
         <div style="float: right">
-        <!--<button class="btn btn-outline-dark" type="button" id="button-addon2">Edit Columns</button>-->
-
-        <!--<div class="btn-group" role="group">
-          <button id="btnGroupDrop1" type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Export
-          </button>
-          <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-            <a class="dropdown-item" href="#">JSON</a>
-            <a class="dropdown-item" href="#">CSV</a>
-          </div>
-        </div>-->
-        <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
+        <!--<button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>-->
       </div>
       </div>
     </div>
@@ -67,7 +56,7 @@
               <td>{{ item.surname }}</td>
               <td>{{ item.first_name }}</td>
               <td>{{ item.party }}</td>
-              <td>{{ item.votes }}</td>
+              <td>{{ "{:,}".format(item.votes) }}</td>
               <td><a href="{{ url_for('detail', year=year, pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
             </tr>
             {% endfor %}
@@ -100,7 +89,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form>
+      <form action="{{ request.url }}" method="POST">
         <div class="modal-body">
           <div class="pr-3">
           <div class="form-group row">
@@ -126,7 +115,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
+          <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
         </div>
       </form>
     </div>

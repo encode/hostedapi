@@ -33,9 +33,36 @@ def test_detail(client):
     assert response.template.name == "detail.html"
 
 
+# Actions
+
+
+def test_create(client):
+    """
+    Test row create.
+    """
+    url = app.url_path_for("table", year=2017)
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = app.url_path_for("table", year=2017)
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+def test_edit(client):
+    """
+    Test row edit.
+    """
+    url = app.url_path_for("detail", year=2017, pk=1)
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
 def test_delete(client):
     """
-    Test row deletion.
+    Test row delete.
     """
     url = app.url_path_for("delete-row", year=2017, pk=1)
     response = client.post(url, allow_redirects=False)
@@ -43,6 +70,9 @@ def test_delete(client):
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
+
+
+# Filters
 
 
 def test_table_with_ordering(client):
@@ -71,6 +101,9 @@ def test_table_with_search(client):
     assert response.status_code == 200
     assert response.template.name == "table.html"
     assert all([constituency == "Tatton" for constituency in rendered_constituency])
+
+
+# Error handler cases
 
 
 def test_table_404(client):

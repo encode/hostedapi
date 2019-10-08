@@ -41,12 +41,20 @@ async def shutdown():
 
 @app.route("/", name="dashboard")
 async def dashboard(request):
+    rows = []
+    for year in (2017, 2015):
+        text = f"UK General Election Results {year}"
+        url = request.url_for("table", year=year)
+        query = tables.election.count().where(tables.election.c.year == year)
+        count = await database.fetch_val(query)
+        rows.append({"text": text, "url": url, "count": count})
+
     template = "dashboard.html"
-    context = {"request": request}
+    context = {"request": request, "rows": rows}
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-{year:int}", name="table")
+@app.route("/uk-general-election-{year:int}", methods=["GET", "POST"], name="table")
 async def table(request):
     PAGE_SIZE = 10
     COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
@@ -57,6 +65,10 @@ async def table(request):
     queryset = await database.fetch_all(query=query)
     if not queryset:
         raise HTTPException(status_code=404)
+
+    if request.method == "POST":
+        data = await request.form()
+        return RedirectResponse(url=request.url, status_code=303)
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
@@ -104,7 +116,9 @@ async def table(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-{year:int}/{pk:int}", name="detail")
+@app.route(
+    "/uk-general-election-{year:int}/{pk:int}", methods=["GET", "POST"], name="detail"
+)
 async def detail(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
@@ -112,6 +126,10 @@ async def detail(request):
     item = await database.fetch_one(query=query)
     if item is None:
         raise HTTPException(status_code=404)
+
+    if request.method == "POST":
+        data = await request.form()
+        return RedirectResponse(url=request.url, status_code=303)
 
     # Render the page
     template = "detail.html"
