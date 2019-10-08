@@ -8,6 +8,7 @@ from source import settings, pagination, ordering, search, tables
 import databases
 import sentry_sdk
 import math
+import typesystem
 
 
 if settings.SENTRY_DSN:  # pragma: nocover
@@ -27,6 +28,14 @@ if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
 
 app.mount("/static", StaticFiles(directory="statics"), name="static")
+
+
+class Record(typesystem.Schema):
+    constituency = typesystem.String(max_length=100)
+    surname = typesystem.String(max_length=100)
+    first_name = typesystem.String(max_length=100)
+    party = typesystem.String(max_length=100)
+    votes = typesystem.Integer(minimum=0)
 
 
 @app.on_event("startup")
@@ -66,10 +75,6 @@ async def table(request):
     if not queryset:
         raise HTTPException(status_code=404)
 
-    if request.method == "POST":
-        data = await request.form()
-        return RedirectResponse(url=request.url, status_code=303)
-
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
     order_column, is_reverse = ordering.get_ordering(
@@ -103,6 +108,21 @@ async def table(request):
         url=request.url, current_page=current_page, total_pages=total_pages
     )
 
+    if request.method == "POST":
+        data = await request.form()
+        record, error = Record.validate_or_error(data)
+        if not error:
+            query = tables.election.insert()
+            values = dict(record)
+            values["year"] = year
+            await database.execute(query=query, values=values)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        data = None
+        error = None
+        status_code = 200
+
     # Render the page
     template = "table.html"
     context = {
@@ -112,8 +132,10 @@ async def table(request):
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
+        "error": error,
+        "data": data,
     }
-    return templates.TemplateResponse(template, context)
+    return templates.TemplateResponse(template, context, status_code=status_code)
 
 
 @app.route(

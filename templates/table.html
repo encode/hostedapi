@@ -25,7 +25,7 @@
       </div>
       <div class="col-md-6">
         <div style="float: right">
-        <!--<button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>-->
+        <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
       </div>
       </div>
     </div>
@@ -51,7 +51,6 @@
           <tbody>
             {% for item in queryset %}
             <tr>
-              <!--<th scope="row">{{ item.pk }}</th>-->
               <td>{{ item.constituency }}</td>
               <td>{{ item.surname }}</td>
               <td>{{ item.first_name }}</td>
@@ -91,27 +90,42 @@
       </div>
       <form action="{{ request.url }}" method="POST">
         <div class="modal-body">
-          <div class="pr-3">
-          <div class="form-group row">
-            <label for="constituencyInput" class="col-sm-3 col-form-label">Constituency</label>
-            <input type="text" class="col-sm-9 form-control" id="exampleInputEmail1">
-          </div>
-          <div class="form-group row">
-            <label for="surnameInput" class="col-sm-3 col-form-label">Surname</label>
-            <input type="text" class="col-sm-9 form-control" id="surnameInput">
-          </div>
-          <div class="form-group row">
-            <label for="firstNameInput" class="col-sm-3 col-form-label">First name</label>
-            <input type="text" class="col-sm-9 form-control" id="firstNameInput">
-          </div>
-          <div class="form-group row">
-            <label for="partyInput" class="col-sm-3 col-form-label">Party</label>
-            <input type="text" class="col-sm-9 form-control" id="partyInput">
-          </div>
-          <div class="form-group row">
-            <label for="votesInput" class="col-sm-3 col-form-label">Votes</label>
-            <input type="number" class="col-sm-9 form-control" id="votesInput">
-          </div>
+          <div class="">
+            <div class="form-group row">
+              <label for="constituencyInput" class="col-sm-3 col-form-label">Constituency</label>
+              <div class="col-sm-9">
+                <input type="text" name="constituency" class="form-control {% if error.constituency %}is-invalid{% endif %}" value="{{ data.constituency }}">
+                 {% if error.constituency %}<div class="invalid-feedback">{{ error.constituency }}</div>{% endif %}
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="surnameInput" class="col-sm-3 col-form-label">Surname</label>
+              <div class="col-sm-9">
+                <input type="text" name="surname" class="form-control {% if error.surname %}is-invalid{% endif %}" value="{{ data.surname }}">
+                {% if error.surname %}<div class="invalid-feedback">{{ error.surname }}</div>{% endif %}
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="firstNameInput" class="col-sm-3 col-form-label">First name</label>
+              <div class="col-sm-9">
+                <input type="text" name="first_name" class="form-control {% if error.first_name %}is-invalid{% endif %}" value="{{ data.first_name }}">
+                {% if error.first_name %}<div class="invalid-feedback">{{ error.first_name}}</div>{% endif %}
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="partyInput" class="col-sm-3 col-form-label">Party</label>
+              <div class="col-sm-9">
+                <input type="text" name="party" class="form-control {% if error.party %}is-invalid{% endif %}" value="{{ data.party }}">
+                {% if error.party %}<div class="invalid-feedback">{{ error.party}}</div>{% endif %}
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="votesInput" class="col-sm-3 col-form-label">Votes</label>
+              <div class="col-sm-9">
+                <input type="number" name="votes" class="form-control {% if error.votes %}is-invalid{% endif %}" value="{{ data.votes }}">
+                {% if error.votes %}<div class="invalid-feedback">{{ error.votes}}</div>{% endif %}
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -121,4 +135,14 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block tail %}
+{% if error %}
+<script type="text/javascript">
+  $('#newRowModal').removeClass('fade')
+  $('#newRowModal').modal('show');
+  $('#newRowModal').addClass('fade')
+</script>
+{% endif %}
 {% endblock %}

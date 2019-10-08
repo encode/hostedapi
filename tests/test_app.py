@@ -36,12 +36,37 @@ def test_detail(client):
 # Actions
 
 
-def test_create(client):
+def test_invalid_create(client):
     """
-    Test row create.
+    Test an invalid row create.
     """
     url = app.url_path_for("table", year=2017)
-    response = client.post(url, allow_redirects=False)
+    data = {
+        "constituency": "",
+        "surname": "WALLACE",
+        "first_name": "Donna Maria",
+        "party": "Green Party",
+        "votes": 1090,
+    }
+    response = client.post(url, data=data, allow_redirects=False)
+
+    assert response.status_code == 400
+    assert response.context["error"]["constituency"] == "Must not be blank."
+
+
+def test_valid_create(client):
+    """
+    Test an invalid row create.
+    """
+    url = app.url_path_for("table", year=2017)
+    data = {
+        "constituency": "Aldershot",
+        "surname": "WALLACE",
+        "first_name": "Donna Maria",
+        "party": "Green Party",
+        "votes": 1090,
+    }
+    response = client.post(url, data=data, allow_redirects=False)
     expected_redirect = app.url_path_for("table", year=2017)
 
     assert response.is_redirect

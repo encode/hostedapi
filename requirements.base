@@ -13,6 +13,7 @@ jinja2==2.*
 python-multipart==0.0.5
 sentry-sdk==0.12.*
 starlette==0.12.*
+typesystem==0.2.*
 uvicorn==0.9.*
 
 # Testing (For consistency we still want to install these to production tho.)
