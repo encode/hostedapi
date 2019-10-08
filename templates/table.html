@@ -90,7 +90,6 @@
       </div>
       <form action="{{ request.url }}" method="POST">
         <div class="modal-body">
-          <div class="">
             <div class="form-group row">
               <label for="constituencyInput" class="col-sm-3 col-form-label">Constituency</label>
               <div class="col-sm-9">
@@ -126,7 +125,6 @@
                 {% if error.votes %}<div class="invalid-feedback">{{ error.votes}}</div>{% endif %}
               </div>
             </div>
-          </div>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>

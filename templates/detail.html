@@ -16,7 +16,7 @@
     <div class="row">
       <div class="col-md-12">
         <div style="float: right">
-        <!--<button class="btn btn-outline-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#editModal"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Row</button>-->
+        <button class="btn btn-outline-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#editModal"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Row</button>
         <button class="btn btn-outline-danger" type="button" id="button-addon2" data-toggle="modal" data-target="#deleteModal"><span class="oi oi-x" title="icon name" aria-hidden="true"></span>
  Delete Row</button>
       </div>
@@ -81,27 +81,40 @@
       </div>
       <form action="{{ request.url }}" method="POST">
       <div class="modal-body">
-        <div class="pr-3">
         <div class="form-group row">
           <label for="constituencyInput" class="col-sm-3 col-form-label">Constituency</label>
-          <input type="text" class="col-sm-9 form-control" id="exampleInputEmail1" value="{{ item.constituency }}">
+          <div class="col-sm-9">
+            <input type="text" name="constituency" class="form-control {% if error.constituency %}is-invalid{% endif %}" value="{{ data.constituency }}">
+             {% if error.constituency %}<div class="invalid-feedback">{{ error.constituency }}</div>{% endif %}
+          </div>
         </div>
         <div class="form-group row">
           <label for="surnameInput" class="col-sm-3 col-form-label">Surname</label>
-          <input type="text" class="col-sm-9 form-control" id="surnameInput" value="{{ item.surname }}">
+          <div class="col-sm-9">
+            <input type="text" name="surname" class="form-control {% if error.surname %}is-invalid{% endif %}" value="{{ data.surname }}">
+            {% if error.surname %}<div class="invalid-feedback">{{ error.surname }}</div>{% endif %}
+          </div>
         </div>
         <div class="form-group row">
           <label for="firstNameInput" class="col-sm-3 col-form-label">First name</label>
-          <input type="text" class="col-sm-9 form-control" id="firstNameInput" value="{{ item.first_name }}">
+          <div class="col-sm-9">
+            <input type="text" name="first_name" class="form-control {% if error.first_name %}is-invalid{% endif %}" value="{{ data.first_name }}">
+            {% if error.first_name %}<div class="invalid-feedback">{{ error.first_name}}</div>{% endif %}
+          </div>
         </div>
         <div class="form-group row">
           <label for="partyInput" class="col-sm-3 col-form-label">Party</label>
-          <input type="text" class="col-sm-9 form-control" id="partyInput" value="{{ item.party }}">
+          <div class="col-sm-9">
+            <input type="text" name="party" class="form-control {% if error.party %}is-invalid{% endif %}" value="{{ data.party }}">
+            {% if error.party %}<div class="invalid-feedback">{{ error.party}}</div>{% endif %}
+          </div>
         </div>
         <div class="form-group row">
           <label for="votesInput" class="col-sm-3 col-form-label">Votes</label>
-          <input type="number" class="col-sm-9 form-control" id="votesInput" value="{{ item.votes }}">
-        </div>
+          <div class="col-sm-9">
+            <input type="number" name="votes" class="form-control {% if error.votes %}is-invalid{% endif %}" value="{{ data.votes }}">
+            {% if error.votes %}<div class="invalid-feedback">{{ error.votes}}</div>{% endif %}
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -111,4 +124,14 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block tail %}
+{% if error %}
+<script type="text/javascript">
+  $('#editModal').removeClass('fade')
+  $('#editModal').modal('show');
+  $('#editModal').addClass('fade')
+</script>
+{% endif %}
 {% endblock %}
