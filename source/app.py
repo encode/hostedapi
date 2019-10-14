@@ -53,7 +53,7 @@ class ElectionDataSource:
         self.name = f"UK General Election Results {year}"
         self.url = app.url_path_for("table", year=year)
         self.year = year
-        self.search_term = ""
+        self.clauses = []
         self.order_column = None
         self.query_limit = None
         self.query_offset = None
@@ -61,14 +61,8 @@ class ElectionDataSource:
     def apply_query_filters(self, query):
         query = query.where(tables.election.c.year == self.year)
 
-        if self.search_term:
-            match = f"%{self.search_term}%"
-            query = query.where(
-                tables.election.c.constituency.ilike(match)
-                | tables.election.c.surname.ilike(match)
-                | tables.election.c.first_name.ilike(match)
-                | tables.election.c.party.ilike(match)
-            )
+        for clause in self.clauses:
+            query = query.where(clause)
 
         if self.query_limit is not None:
             query = query.limit(self.query_limit)
@@ -91,7 +85,18 @@ class ElectionDataSource:
         return self
 
     def search(self, search_term):
-        self.search_term = search_term
+        if not search_term:
+            return self
+
+        match = f"%{search_term}%"
+        self.clauses.append(
+            (
+                tables.election.c.constituency.ilike(match)
+                | tables.election.c.surname.ilike(match)
+                | tables.election.c.first_name.ilike(match)
+                | tables.election.c.party.ilike(match)
+            )
+        )
         return self
 
     def order_by(self, column, reverse):
