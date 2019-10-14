@@ -48,14 +48,29 @@ async def shutdown():
     await database.disconnect()
 
 
+class ElectionDataSource:
+    def __init__(self, app, year):
+        self.name = f"UK General Election Results {year}"
+        self.url = app.url_path_for("table", year=year)
+        self.year = year
+
+    async def count(self):
+        query = tables.election.count().where(tables.election.c.year == self.year)
+        return await database.fetch_val(query)
+
+
 @app.route("/", name="dashboard")
 async def dashboard(request):
     rows = []
-    for year in (2017, 2015):
-        text = f"UK General Election Results {year}"
-        url = request.url_for("table", year=year)
-        query = tables.election.count().where(tables.election.c.year == year)
-        count = await database.fetch_val(query)
+
+    datasources = [
+        ElectionDataSource(app=app, year=2017),
+        ElectionDataSource(app=app, year=2015),
+    ]
+    for datasource in datasources:
+        text = datasource.name
+        url = datasource.url
+        count = await datasource.count()
         rows.append({"text": text, "url": url, "count": count})
 
     template = "dashboard.html"
