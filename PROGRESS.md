@@ -106,3 +106,21 @@ Put in place a basic admin-like site structure...
 * Add a top-level dashboard page
 * Add a single-item details page
 * Breadcrumbs interlinking between each layer
+
+# Day 5
+
+## Hook up database
+
+Loads the data from a postgres database, rather than a hardcoded data source.
+
+* Added migrations, using alembic.
+* Tests run against a newly created test database on each run.
+* Individual test cases are isolated inside a transaction that rolls back at the end of each test.
+
+# Day 6
+
+## Make the data editable
+
+* Add 'New Row', 'Edit Row', and 'Delete Row' controls.
+* Input validation using `typesystem`.
+* Persist changes to the database.
