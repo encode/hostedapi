@@ -53,10 +53,67 @@ class ElectionDataSource:
         self.name = f"UK General Election Results {year}"
         self.url = app.url_path_for("table", year=year)
         self.year = year
+        self.search_term = ""
+        self.order_column = None
+        self.query_limit = None
+        self.query_offset = None
+
+    def apply_query_filters(self, query):
+        query = query.where(tables.election.c.year == self.year)
+
+        if self.search_term:
+            match = f"%{self.search_term}%"
+            query = query.where(
+                tables.election.c.constituency.ilike(match)
+                | tables.election.c.surname.ilike(match)
+                | tables.election.c.first_name.ilike(match)
+                | tables.election.c.party.ilike(match)
+            )
+
+        if self.query_limit is not None:
+            query = query.limit(self.query_limit)
+
+        if self.query_offset is not None:
+            query = query.offset(self.query_offset)
+
+        if self.order_column is not None:
+            return query.group_by(tables.election.c.pk).order_by(
+                self.order_column, tables.election.c.pk
+            )
+        return query.group_by(tables.election.c.pk).order_by(tables.election.c.pk)
+
+    def limit(self, limit):
+        self.query_limit = limit
+        return self
+
+    def offset(self, offset):
+        self.query_offset = offset
+        return self
+
+    def search(self, search_term):
+        self.search_term = search_term
+        return self
+
+    def order_by(self, column, reverse):
+        order_column = {
+            "constituency": tables.election.c.constituency,
+            "surname": tables.election.c.surname,
+            "first_name": tables.election.c.first_name,
+            "party": tables.election.c.party,
+            "votes": tables.election.c.votes,
+        }[column]
+        self.order_column = order_column.desc() if reverse else order_column.asc()
+        return self
 
     async def count(self):
-        query = tables.election.count().where(tables.election.c.year == self.year)
+        query = tables.election.count()
+        query = self.apply_query_filters(query)
         return await database.fetch_val(query)
+
+    async def fetch_all(self):
+        query = tables.election.select()
+        query = self.apply_query_filters(query)
+        return await database.fetch_all(query)
 
 
 @app.route("/", name="dashboard")
@@ -85,10 +142,10 @@ async def table(request):
     ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
 
     year = request.path_params["year"]
-    query = tables.election.select().where(tables.election.c.year == year)
-    queryset = await database.fetch_all(query=query)
-    if not queryset:
+    if year not in (2017, 2015):
         raise HTTPException(status_code=404)
+
+    datasource = ElectionDataSource(app=app, year=year)
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
@@ -98,22 +155,21 @@ async def table(request):
     search_term = search.get_search_term(url=request.url)
 
     # Filter by any search term
-    queryset = search.filter_by_search_term(
-        queryset, search_term=search_term, attributes=ALLOWED_COLUMN_IDS
-    )
+    datasource = datasource.search(search_term)
 
     # Determine pagination info
-    total_pages = max(math.ceil(len(queryset) / PAGE_SIZE), 1)
+    count = await datasource.count()
+    total_pages = max(math.ceil(count / PAGE_SIZE), 1)
     current_page = max(min(current_page, total_pages), 1)
     offset = (current_page - 1) * PAGE_SIZE
 
     # Perform column ordering
-    queryset = ordering.sort_by_ordering(
-        queryset, column=order_column, is_reverse=is_reverse
-    )
+    if order_column is not None:
+        datasource = datasource.order_by(column=order_column, reverse=is_reverse)
 
     #  Perform pagination
-    queryset = queryset[offset : offset + PAGE_SIZE]
+    datasource = datasource.offset(offset).limit(PAGE_SIZE)
+    queryset = await datasource.fetch_all()
 
     # Get pagination and column controls to render on the page
     column_controls = ordering.get_column_controls(
