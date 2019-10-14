@@ -71,10 +71,10 @@ class ElectionDataSource:
             query = query.offset(self.query_offset)
 
         if self.order_column is not None:
-            return query.group_by(tables.election.c.pk).order_by(
+            query = query.group_by(tables.election.c.pk).order_by(
                 self.order_column, tables.election.c.pk
             )
-        return query.group_by(tables.election.c.pk).order_by(tables.election.c.pk)
+        return query
 
     def limit(self, limit):
         self.query_limit = limit
@@ -99,6 +99,12 @@ class ElectionDataSource:
         )
         return self
 
+    def filter(self, **kwargs):
+        for key, value in kwargs.items():
+            column = {"pk": tables.election.c.pk}[key]
+            self.clauses.append(column == value)
+        return self
+
     def order_by(self, column, reverse):
         order_column = {
             "constituency": tables.election.c.constituency,
@@ -115,10 +121,29 @@ class ElectionDataSource:
         query = self.apply_query_filters(query)
         return await database.fetch_val(query)
 
-    async def fetch_all(self):
+    async def all(self):
         query = tables.election.select()
         query = self.apply_query_filters(query)
         return await database.fetch_all(query)
+
+    async def get(self):
+        query = tables.election.select()
+        query = self.apply_query_filters(query)
+        return await database.fetch_one(query)
+
+    async def create(self, values):
+        query = tables.election.insert()
+        return await database.execute(query, values=values)
+
+    async def update(self, values):
+        query = tables.election.update()
+        query = self.apply_query_filters(query)
+        return await database.execute(query, values=values)
+
+    async def delete(self):
+        query = tables.election.delete()
+        query = self.apply_query_filters(query)
+        return await database.execute(query)
 
 
 @app.route("/", name="dashboard")
@@ -174,7 +199,7 @@ async def table(request):
 
     #  Perform pagination
     datasource = datasource.offset(offset).limit(PAGE_SIZE)
-    queryset = await datasource.fetch_all()
+    queryset = await datasource.all()
 
     # Get pagination and column controls to render on the page
     column_controls = ordering.get_column_controls(
@@ -188,10 +213,9 @@ async def table(request):
         data = await request.form()
         record, error = Record.validate_or_error(data)
         if not error:
-            query = tables.election.insert()
             values = dict(record)
             values["year"] = year
-            await database.execute(query=query, values=values)
+            await datasource.create(values=values)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
@@ -220,8 +244,11 @@ async def table(request):
 async def detail(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
-    query = tables.election.select().where(tables.election.c.pk == pk)
-    item = await database.fetch_one(query=query)
+
+    datasource = ElectionDataSource(app=app, year=year)
+    datasource = datasource.filter(pk=pk)
+    item = await datasource.get()
+
     if item is None:
         raise HTTPException(status_code=404)
 
@@ -229,9 +256,7 @@ async def detail(request):
         data = await request.form()
         record, error = Record.validate_or_error(data)
         if not error:
-            query = tables.election.update().where(tables.election.c.pk == pk)
-            values = dict(record)
-            await database.execute(query=query, values=values)
+            await datasource.update(values=dict(record))
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
@@ -260,13 +285,15 @@ async def detail(request):
 async def delete_row(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
-    query = tables.election.select().where(tables.election.c.pk == pk)
-    item = await database.fetch_one(query=query)
+
+    datasource = ElectionDataSource(app=app, year=year)
+    datasource = datasource.filter(pk=pk)
+    item = await datasource.get()
+
     if item is None:
         raise HTTPException(status_code=404)
 
-    query = tables.election.delete().where(tables.election.c.pk == pk)
-    await database.execute(query=query)
+    await datasource.delete()
     url = request.url_for("table", year=year)
     return RedirectResponse(url=url, status_code=303)
 

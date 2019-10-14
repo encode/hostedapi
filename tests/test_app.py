@@ -27,7 +27,7 @@ def test_detail(client):
     """
     Ensure that the detail pages renders the 'detail.html' template.
     """
-    url = app.url_path_for("detail", year=2017, pk=1)
+    url = app.url_path_for("detail", year=2015, pk=1)
     response = client.get(url)
     assert response.status_code == 200
     assert response.template.name == "detail.html"
@@ -77,7 +77,7 @@ def test_invalid_edit(client):
     """
     Test an invalid row edit.
     """
-    url = app.url_path_for("detail", year=2017, pk=1)
+    url = app.url_path_for("detail", year=2015, pk=1)
     data = {
         "constituency": "",
         "surname": "WALLACE",
@@ -95,7 +95,7 @@ def test_valid_edit(client):
     """
     Test row edit.
     """
-    url = app.url_path_for("detail", year=2017, pk=1)
+    url = app.url_path_for("detail", year=2015, pk=1)
     data = {
         "constituency": "Aldershot",
         "surname": "WALLACE",
@@ -114,9 +114,9 @@ def test_delete(client):
     """
     Test row delete.
     """
-    url = app.url_path_for("delete-row", year=2017, pk=1)
+    url = app.url_path_for("delete-row", year=2015, pk=1)
     response = client.post(url, allow_redirects=False)
-    expected_redirect = app.url_path_for("table", year=2017)
+    expected_redirect = app.url_path_for("table", year=2015)
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
