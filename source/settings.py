@@ -1,6 +1,6 @@
 from starlette.config import Config
 import databases
-
+import sentry_sdk
 
 config = Config()
 
@@ -21,6 +21,11 @@ TEST_DATABASE_URL = DATABASE_URL.replace(database="test_" + DATABASE_URL.databas
 # See https://docs.sentry.io/platforms/python/#connecting-the-sdk-to-sentry
 SENTRY_DSN = config("SENTRY_DSN", cast=str, default="")
 
+
 # Heroku Dyno Metadata, enabled with `heroku labs:enable runtime-dyno-metadata`
 # See https://devcenter.heroku.com/articles/dyno-metadata
 RELEASE_VERSION = config("HEROKU_RELEASE_VERSION", cast=str, default="<local dev>")
+
+
+if SENTRY_DSN:  # pragma: nocover
+    sentry_sdk.init(dsn=SENTRY_DSN, release=RELEASE_VERSION)
