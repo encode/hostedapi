@@ -10,30 +10,24 @@ from dataclasses import dataclass
 
 def test_order_by_column():
     url = URL("?order=name")
-    allowed_column_ids = ["name", "email"]
-    order_column, order_reverse = get_ordering(
-        url=url, allowed_column_ids=allowed_column_ids
-    )
+    columns = {"name": "Name", "email": "Email"}
+    order_column, order_reverse = get_ordering(url=url, columns=columns)
     assert order_column == "name"
     assert not order_reverse
 
 
 def test_order_by_reverse_column():
     url = URL("?order=-name")
-    allowed_column_ids = ["name", "email"]
-    order_column, order_reverse = get_ordering(
-        url=url, allowed_column_ids=allowed_column_ids
-    )
+    columns = {"name": "Name", "email": "Email"}
+    order_column, order_reverse = get_ordering(url=url, columns=columns)
     assert order_column == "name"
     assert order_reverse
 
 
 def test_order_by_invalid_column():
     url = URL("?order=invalid")
-    allowed_column_ids = ["name", "email"]
-    order_column, order_reverse = get_ordering(
-        url=url, allowed_column_ids=allowed_column_ids
-    )
+    columns = {"name": "Name", "email": "Email"}
+    order_column, order_reverse = get_ordering(url=url, columns=columns)
     assert order_column is None
     assert not order_reverse
 
@@ -91,11 +85,11 @@ def test_sort_without_ordering():
 
 
 def test_get_column_controls_no_current_selection():
-    names = ["Username", "Email"]
+    columns = {"username": "Username", "email": "Email"}
     url = URL("/")
     column, is_reverse = None, False
 
-    controls = get_column_controls(url, names, column=None, is_reverse=False)
+    controls = get_column_controls(url, columns, selected_column=None, is_reverse=False)
 
     assert controls == [
         ColumnControl(
@@ -116,11 +110,13 @@ def test_get_column_controls_no_current_selection():
 
 
 def test_get_column_controls_forward_current_selection():
-    names = ["Username", "Email"]
+    columns = {"username": "Username", "email": "Email"}
     url = URL("/?order=username")
     column, is_reverse = "username", False
 
-    controls = get_column_controls(url, names, column="username", is_reverse=False)
+    controls = get_column_controls(
+        url, columns, selected_column="username", is_reverse=False
+    )
 
     assert controls == [
         ColumnControl(
@@ -141,12 +137,12 @@ def test_get_column_controls_forward_current_selection():
 
 
 def test_get_column_controls_reverse_current_selection():
-    names = ["Username", "Email"]
+    columns = {"username": "Username", "email": "Email"}
     url = URL("/?order=-username")
     column, is_reverse = "username", True
 
     controls = get_column_controls(
-        url=url, names=names, column=column, is_reverse=is_reverse
+        url=url, columns=columns, selected_column=column, is_reverse=is_reverse
     )
 
     assert controls == [

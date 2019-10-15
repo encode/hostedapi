@@ -1,41 +1,21 @@
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
-from starlette.staticfiles import StaticFiles
 from starlette.responses import HTMLResponse, RedirectResponse
-from starlette.templating import Jinja2Templates
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
+from source.resources import database, statics, templates
+from source.datasource import ElectionDataSource
 import databases
-import sentry_sdk
 import math
 import typesystem
 
-
-if settings.SENTRY_DSN:  # pragma: nocover
-    sentry_sdk.init(dsn=settings.SENTRY_DSN, release=settings.RELEASE_VERSION)
-
-
-templates = Jinja2Templates(directory="templates")
-
-if settings.TESTING:
-    database = databases.Database(settings.TEST_DATABASE_URL, force_rollback=True)
-else:  # pragma: nocover
-    database = databases.Database(settings.DATABASE_URL)
 
 app = Starlette(debug=settings.DEBUG)
 
 if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
 
-app.mount("/static", StaticFiles(directory="statics"), name="static")
-
-
-class Record(typesystem.Schema):
-    constituency = typesystem.String(max_length=100)
-    surname = typesystem.String(max_length=100)
-    first_name = typesystem.String(max_length=100)
-    party = typesystem.String(max_length=100)
-    votes = typesystem.Integer(minimum=0)
+app.mount("/static", statics, name="static")
 
 
 @app.on_event("startup")
@@ -51,11 +31,15 @@ async def shutdown():
 @app.route("/", name="dashboard")
 async def dashboard(request):
     rows = []
-    for year in (2017, 2015):
-        text = f"UK General Election Results {year}"
-        url = request.url_for("table", year=year)
-        query = tables.election.count().where(tables.election.c.year == year)
-        count = await database.fetch_val(query)
+
+    datasources = [
+        ElectionDataSource(app=app, year=2017),
+        ElectionDataSource(app=app, year=2015),
+    ]
+    for datasource in datasources:
+        text = datasource.name
+        url = datasource.url
+        count = await datasource.count()
         rows.append({"text": text, "url": url, "count": count})
 
     template = "dashboard.html"
@@ -66,74 +50,72 @@ async def dashboard(request):
 @app.route("/uk-general-election-{year:int}", methods=["GET", "POST"], name="table")
 async def table(request):
     PAGE_SIZE = 10
-    COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
-    ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
 
     year = request.path_params["year"]
-    query = tables.election.select().where(tables.election.c.year == year)
-    queryset = await database.fetch_all(query=query)
-    if not queryset:
+    if year not in (2017, 2015):
         raise HTTPException(status_code=404)
+
+    datasource = ElectionDataSource(app=app, year=year)
+    columns = {key: field.title for key, field in datasource.schema.fields.items()}
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
-    order_column, is_reverse = ordering.get_ordering(
-        url=request.url, allowed_column_ids=ALLOWED_COLUMN_IDS
-    )
+    order_column, is_reverse = ordering.get_ordering(url=request.url, columns=columns)
     search_term = search.get_search_term(url=request.url)
 
     # Filter by any search term
-    queryset = search.filter_by_search_term(
-        queryset, search_term=search_term, attributes=ALLOWED_COLUMN_IDS
-    )
+    datasource = datasource.search(search_term)
 
     # Determine pagination info
-    total_pages = max(math.ceil(len(queryset) / PAGE_SIZE), 1)
+    count = await datasource.count()
+    total_pages = max(math.ceil(count / PAGE_SIZE), 1)
     current_page = max(min(current_page, total_pages), 1)
     offset = (current_page - 1) * PAGE_SIZE
 
     # Perform column ordering
-    queryset = ordering.sort_by_ordering(
-        queryset, column=order_column, is_reverse=is_reverse
-    )
+    if order_column is not None:
+        datasource = datasource.order_by(column=order_column, reverse=is_reverse)
 
     #  Perform pagination
-    queryset = queryset[offset : offset + PAGE_SIZE]
+    datasource = datasource.offset(offset).limit(PAGE_SIZE)
+    queryset = await datasource.all()
 
     # Get pagination and column controls to render on the page
     column_controls = ordering.get_column_controls(
-        url=request.url, names=COLUMN_NAMES, column=order_column, is_reverse=is_reverse
+        url=request.url,
+        columns=columns,
+        selected_column=order_column,
+        is_reverse=is_reverse,
     )
     page_controls = pagination.get_page_controls(
         url=request.url, current_page=current_page, total_pages=total_pages
     )
 
     if request.method == "POST":
-        data = await request.form()
-        record, error = Record.validate_or_error(data)
-        if not error:
-            query = tables.election.insert()
-            values = dict(record)
-            values["year"] = year
-            await database.execute(query=query, values=values)
+        form_values = await request.form()
+        validated_data, form_errors = datasource.validate(form_values)
+        if not form_errors:
+            await datasource.create(values=validated_data)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
-        data = None
-        error = None
+        form_values = None
+        form_errors = None
         status_code = 200
 
     # Render the page
     template = "table.html"
     context = {
         "request": request,
+        "schema": datasource.schema,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
         "queryset": queryset,
-        "year": year,
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
-        "error": error,
-        "data": data,
+        "form_errors": form_errors,
+        "form_values": form_values,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -144,34 +126,38 @@ async def table(request):
 async def detail(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
-    query = tables.election.select().where(tables.election.c.pk == pk)
-    item = await database.fetch_one(query=query)
+
+    datasource = ElectionDataSource(app=app, year=year)
+    datasource = datasource.filter(pk=pk)
+    item = await datasource.get()
+
     if item is None:
         raise HTTPException(status_code=404)
 
     if request.method == "POST":
-        data = await request.form()
-        record, error = Record.validate_or_error(data)
-        if not error:
-            query = tables.election.update().where(tables.election.c.pk == pk)
-            values = dict(record)
-            await database.execute(query=query, values=values)
+        form_values = await request.form()
+        validated_data, form_errors = datasource.validate(form_values)
+        if not form_errors:
+            await item.update(values=validated_data)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
-        data = item
-        error = None
+        form_values = (
+            None if item is None else datasource.schema.make_validator().serialize(item)
+        )
+        form_errors = None
         status_code = 200
 
     # Render the page
     template = "detail.html"
     context = {
         "request": request,
-        "year": year,
-        "pk": pk,
+        "schema": datasource.schema,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
         "item": item,
-        "data": data,
-        "error": error,
+        "form_values": form_values,
+        "form_errors": form_errors,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -184,13 +170,15 @@ async def detail(request):
 async def delete_row(request):
     year = request.path_params["year"]
     pk = request.path_params["pk"]
-    query = tables.election.select().where(tables.election.c.pk == pk)
-    item = await database.fetch_one(query=query)
+
+    datasource = ElectionDataSource(app=app, year=year)
+    datasource = datasource.filter(pk=pk)
+    item = await datasource.get()
+
     if item is None:
         raise HTTPException(status_code=404)
 
-    query = tables.election.delete().where(tables.election.c.pk == pk)
-    await database.execute(query=query)
+    await item.delete()
     url = request.url_for("table", year=year)
     return RedirectResponse(url=url, status_code=303)
 

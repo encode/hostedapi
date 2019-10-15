@@ -7,7 +7,7 @@
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item active">UK General Election Results {{ year }}</li>
+          <li class="breadcrumb-item active">{{ table_name }}</li>
         </ol>
       </nav>
     </div>
@@ -51,12 +51,10 @@
           <tbody>
             {% for item in queryset %}
             <tr>
-              <td>{{ item.constituency }}</td>
-              <td>{{ item.surname }}</td>
-              <td>{{ item.first_name }}</td>
-              <td>{{ item.party }}</td>
-              <td>{{ "{:,}".format(item.votes) }}</td>
-              <td><a href="{{ url_for('detail', year=year, pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
+              {% for key in schema.fields.keys() %}
+                <td>{{ item[key] }}</td>
+              {% endfor %}
+              <td><a href="{{ item.url }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -90,41 +88,15 @@
       </div>
       <form action="{{ request.url }}" method="POST">
         <div class="modal-body">
-            <div class="form-group row">
-              <label for="constituencyInput" class="col-sm-3 col-form-label">Constituency</label>
-              <div class="col-sm-9">
-                <input type="text" name="constituency" class="form-control {% if error.constituency %}is-invalid{% endif %}" value="{{ data.constituency }}">
-                 {% if error.constituency %}<div class="invalid-feedback">{{ error.constituency }}</div>{% endif %}
-              </div>
+          {% for key, field in schema.fields.items() %}
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label">{{ field.title }}</label>
+            <div class="col-sm-9">
+              <input type="text" name="{{ key }}" class="form-control {% if form_errors[key] %}is-invalid{% endif %}" value="{{ form_values[key] }}">
+               {% if form_errors[key] %}<div class="invalid-feedback">{{ form_errors[key] }}</div>{% endif %}
             </div>
-            <div class="form-group row">
-              <label for="surnameInput" class="col-sm-3 col-form-label">Surname</label>
-              <div class="col-sm-9">
-                <input type="text" name="surname" class="form-control {% if error.surname %}is-invalid{% endif %}" value="{{ data.surname }}">
-                {% if error.surname %}<div class="invalid-feedback">{{ error.surname }}</div>{% endif %}
-              </div>
-            </div>
-            <div class="form-group row">
-              <label for="firstNameInput" class="col-sm-3 col-form-label">First name</label>
-              <div class="col-sm-9">
-                <input type="text" name="first_name" class="form-control {% if error.first_name %}is-invalid{% endif %}" value="{{ data.first_name }}">
-                {% if error.first_name %}<div class="invalid-feedback">{{ error.first_name}}</div>{% endif %}
-              </div>
-            </div>
-            <div class="form-group row">
-              <label for="partyInput" class="col-sm-3 col-form-label">Party</label>
-              <div class="col-sm-9">
-                <input type="text" name="party" class="form-control {% if error.party %}is-invalid{% endif %}" value="{{ data.party }}">
-                {% if error.party %}<div class="invalid-feedback">{{ error.party}}</div>{% endif %}
-              </div>
-            </div>
-            <div class="form-group row">
-              <label for="votesInput" class="col-sm-3 col-form-label">Votes</label>
-              <div class="col-sm-9">
-                <input type="number" name="votes" class="form-control {% if error.votes %}is-invalid{% endif %}" value="{{ data.votes }}">
-                {% if error.votes %}<div class="invalid-feedback">{{ error.votes}}</div>{% endif %}
-              </div>
-            </div>
+          </div>
+          {% endfor %}
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
@@ -136,7 +108,7 @@
 {% endblock %}
 
 {% block tail %}
-{% if error %}
+{% if form_errors %}
 <script type="text/javascript">
   $('#newRowModal').removeClass('fade')
   $('#newRowModal').modal('show');
