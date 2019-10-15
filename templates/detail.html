@@ -7,8 +7,8 @@
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{{ url_for('table', year=year) }}">UK General Election Results {{ year }}</a></li>
-          <li class="breadcrumb-item active">{{ item.first_name }} {{ item.surname }}</li>
+          <li class="breadcrumb-item"><a href="{{ table_url }}">{{ table_name }}</a></li>
+          <li class="breadcrumb-item active">{{ item }}</li>
         </ol>
       </nav>
     </div>
@@ -52,7 +52,7 @@
         Are you sure?
       </div>
       <div class="modal-footer">
-        <form action="{{ url_for('delete-row', year=year, pk=pk) }}" method="POST">
+        <form action="{{ item.delete_url }}" method="POST">
           <button type="submit" class="btn btn-outline-danger"><span class="oi oi-x" title="icon name" aria-hidden="true"></span> Confirm Delete</button>
         </form>
       </div>

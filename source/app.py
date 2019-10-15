@@ -53,6 +53,7 @@ class ElectionDataSource:
 
     def __init__(self, app, year):
         self.name = f"UK General Election Results {year}"
+        self.app = app
         self.url = app.url_path_for("table", year=year)
         self.year = year
         self.clauses = []
@@ -124,12 +125,16 @@ class ElectionDataSource:
     async def all(self):
         query = tables.election.select()
         query = self.apply_query_filters(query)
-        return await database.fetch_all(query)
+        rows = await database.fetch_all(query)
+        return [ElectionDataItem(app=self.app, year=self.year, row=row) for row in rows]
 
     async def get(self):
         query = tables.election.select()
         query = self.apply_query_filters(query)
-        return await database.fetch_one(query)
+        row = await database.fetch_one(query)
+        if row is None:
+            return None
+        return ElectionDataItem(app=self.app, year=self.year, row=row)
 
     async def create(self, values):
         values = dict(values)
@@ -137,20 +142,41 @@ class ElectionDataSource:
         query = tables.election.insert()
         return await database.execute(query, values=values)
 
-    async def update(self, values):
-        query = tables.election.update()
-        query = self.apply_query_filters(query)
-        return await database.execute(query, values=values)
-
-    async def delete(self):
-        query = tables.election.delete()
-        query = self.apply_query_filters(query)
-        return await database.execute(query)
-
     def validate(self, data):
         record, errors = Record.validate_or_error(data)
         validated_data = dict(record) if record is not None else None
         return validated_data, errors
+
+
+class ElectionDataItem:
+    def __init__(self, app, year, row):
+        self.app = app
+        self.year = year
+        self.pk = row["pk"]
+        self.constituency = row["constituency"]
+        self.surname = row["surname"]
+        self.first_name = row["first_name"]
+        self.party = row["party"]
+        self.votes = row["votes"]
+
+    def __str__(self):
+        return f"{self.first_name} {self.surname}"
+
+    async def update(self, values):
+        query = tables.election.update().where(tables.election.c.pk == self.pk)
+        return await database.execute(query, values=values)
+
+    async def delete(self):
+        query = tables.election.delete().where(tables.election.c.pk == self.pk)
+        return await database.execute(query)
+
+    @property
+    def url(self):
+        return self.app.url_path_for("detail", year=self.year, pk=self.pk)
+
+    @property
+    def delete_url(self):
+        return self.app.url_path_for("delete-row", year=self.year, pk=self.pk)
 
 
 @app.route("/", name="dashboard")
@@ -233,8 +259,9 @@ async def table(request):
     context = {
         "request": request,
         "schema": datasource.schema,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
         "queryset": queryset,
-        "year": year,
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
@@ -262,11 +289,13 @@ async def detail(request):
         form_values = await request.form()
         validated_data, form_errors = datasource.validate(form_values)
         if not form_errors:
-            await datasource.update(values=validated_data)
+            await item.update(values=validated_data)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
-        form_values = None if item is None else dict(item)
+        form_values = (
+            None if item is None else datasource.schema.make_validator().serialize(item)
+        )
         form_errors = None
         status_code = 200
 
@@ -275,8 +304,8 @@ async def detail(request):
     context = {
         "request": request,
         "schema": datasource.schema,
-        "year": year,
-        "pk": pk,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
         "item": item,
         "form_values": form_values,
         "form_errors": form_errors,
@@ -300,7 +329,7 @@ async def delete_row(request):
     if item is None:
         raise HTTPException(status_code=404)
 
-    await datasource.delete()
+    await item.delete()
     url = request.url_for("table", year=year)
     return RedirectResponse(url=url, status_code=303)
 

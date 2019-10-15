@@ -7,7 +7,7 @@
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item active">UK General Election Results {{ year }}</li>
+          <li class="breadcrumb-item active">{{ table_name }}</li>
         </ol>
       </nav>
     </div>
@@ -54,7 +54,7 @@
               {% for key in schema.fields.keys() %}
                 <td>{{ item[key] }}</td>
               {% endfor %}
-              <td><a href="{{ url_for('detail', year=year, pk=item.pk) }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
+              <td><a href="{{ item.url }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
             </tr>
             {% endfor %}
           </tbody>

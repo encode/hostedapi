@@ -132,7 +132,7 @@ def test_table_with_ordering(client):
     url = app.url_path_for("table", year=2017) + "?order=votes"
     response = client.get(url)
     template_queryset = response.context["queryset"]
-    rendered_votes = [item["votes"] for item in template_queryset]
+    rendered_votes = [item.votes for item in template_queryset]
 
     assert response.status_code == 200
     assert response.template.name == "table.html"
@@ -146,7 +146,7 @@ def test_table_with_search(client):
     url = app.url_path_for("table", year=2017) + "?search=tatton"
     response = client.get(url)
     template_queryset = response.context["queryset"]
-    rendered_constituency = [item["constituency"] for item in template_queryset]
+    rendered_constituency = [item.constituency for item in template_queryset]
 
     assert response.status_code == 200
     assert response.template.name == "table.html"
