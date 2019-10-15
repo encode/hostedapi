@@ -31,11 +31,11 @@ app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 
 class Record(typesystem.Schema):
-    constituency = typesystem.String(max_length=100)
-    surname = typesystem.String(max_length=100)
-    first_name = typesystem.String(max_length=100)
-    party = typesystem.String(max_length=100)
-    votes = typesystem.Integer(minimum=0)
+    constituency = typesystem.String(title="Constituency", max_length=100)
+    surname = typesystem.String(title="Surname", max_length=100)
+    first_name = typesystem.String(title="First Name", max_length=100)
+    party = typesystem.String(title="Party", max_length=100)
+    votes = typesystem.Integer(title="Votes", minimum=0)
 
 
 @app.on_event("startup")
@@ -49,6 +49,8 @@ async def shutdown():
 
 
 class ElectionDataSource:
+    schema = Record
+
     def __init__(self, app, year):
         self.name = f"UK General Election Results {year}"
         self.url = app.url_path_for("table", year=year)
@@ -173,20 +175,17 @@ async def dashboard(request):
 @app.route("/uk-general-election-{year:int}", methods=["GET", "POST"], name="table")
 async def table(request):
     PAGE_SIZE = 10
-    COLUMN_NAMES = ("Constituency", "Surname", "First Name", "Party", "Votes")
-    ALLOWED_COLUMN_IDS = ("constituency", "surname", "first_name", "party", "votes")
 
     year = request.path_params["year"]
     if year not in (2017, 2015):
         raise HTTPException(status_code=404)
 
     datasource = ElectionDataSource(app=app, year=year)
+    columns = {key: field.title for key, field in datasource.schema.fields.items()}
 
     # Get some normalised information from URL query parameters
     current_page = pagination.get_page_number(url=request.url)
-    order_column, is_reverse = ordering.get_ordering(
-        url=request.url, allowed_column_ids=ALLOWED_COLUMN_IDS
-    )
+    order_column, is_reverse = ordering.get_ordering(url=request.url, columns=columns)
     search_term = search.get_search_term(url=request.url)
 
     # Filter by any search term
@@ -208,7 +207,10 @@ async def table(request):
 
     # Get pagination and column controls to render on the page
     column_controls = ordering.get_column_controls(
-        url=request.url, names=COLUMN_NAMES, column=order_column, is_reverse=is_reverse
+        url=request.url,
+        columns=columns,
+        selected_column=order_column,
+        is_reverse=is_reverse,
     )
     page_controls = pagination.get_page_controls(
         url=request.url, current_page=current_page, total_pages=total_pages
@@ -230,6 +232,7 @@ async def table(request):
     template = "table.html"
     context = {
         "request": request,
+        "schema": datasource.schema,
         "queryset": queryset,
         "year": year,
         "search_term": search_term,
@@ -271,6 +274,7 @@ async def detail(request):
     template = "detail.html"
     context = {
         "request": request,
+        "schema": datasource.schema,
         "year": year,
         "pk": pk,
         "item": item,

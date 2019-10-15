@@ -17,7 +17,7 @@ class ColumnControl:
 
 
 def get_ordering(
-    url: URL, allowed_column_ids: typing.Sequence[str]
+    url: URL, columns: typing.Dict[str, str]
 ) -> typing.Tuple[typing.Optional[str], bool]:
     """
     Determine a column ordering based on the URL query string.
@@ -28,7 +28,7 @@ def get_ordering(
     ordering = query_params.get("order", default="")
     order_column = ordering.lstrip("-")
     order_reverse = ordering.startswith("-")
-    if order_column not in allowed_column_ids:
+    if order_column not in columns:
         return None, False
     return order_column, order_reverse
 
@@ -47,13 +47,15 @@ def sort_by_ordering(
 
 
 def get_column_controls(
-    url: URL, names: typing.List[str], column: typing.Optional[str], is_reverse: bool
+    url: URL,
+    columns: typing.Dict[str, str],
+    selected_column: typing.Optional[str],
+    is_reverse: bool,
 ) -> typing.List[ColumnControl]:
     controls = []
-    for name in names:
-        column_id = name.lower().replace(" ", "_")
+    for column_id, name in columns.items():
 
-        if column != column_id:
+        if selected_column != column_id:
             # Column is not selected. Link URL to forward search.
             linked_url = url.include_query_params(order=column_id).remove_query_params(
                 "page"
@@ -71,8 +73,8 @@ def get_column_controls(
             id=column_id,
             text=name,
             url=linked_url,
-            is_forward_sorted=column == column_id and not is_reverse,
-            is_reverse_sorted=column == column_id and is_reverse,
+            is_forward_sorted=selected_column == column_id and not is_reverse,
+            is_reverse_sorted=selected_column == column_id and is_reverse,
         )
         controls.append(control)
     return controls
