@@ -99,10 +99,8 @@ class ElectionDataSource:
         )
         return self
 
-    def filter(self, **kwargs):
-        for key, value in kwargs.items():
-            column = {"pk": tables.election.c.pk}[key]
-            self.clauses.append(column == value)
+    def filter(self, pk=None):
+        self.clauses.append(tables.election.c.pk == pk)
         return self
 
     def order_by(self, column, reverse):
@@ -132,6 +130,8 @@ class ElectionDataSource:
         return await database.fetch_one(query)
 
     async def create(self, values):
+        values = dict(values)
+        values["year"] = self.year
         query = tables.election.insert()
         return await database.execute(query, values=values)
 
@@ -144,6 +144,11 @@ class ElectionDataSource:
         query = tables.election.delete()
         query = self.apply_query_filters(query)
         return await database.execute(query)
+
+    def validate(self, data):
+        record, errors = Record.validate_or_error(data)
+        validated_data = dict(record) if record is not None else None
+        return validated_data, errors
 
 
 @app.route("/", name="dashboard")
@@ -210,17 +215,15 @@ async def table(request):
     )
 
     if request.method == "POST":
-        data = await request.form()
-        record, error = Record.validate_or_error(data)
-        if not error:
-            values = dict(record)
-            values["year"] = year
-            await datasource.create(values=values)
+        form_values = await request.form()
+        validated_data, form_errors = datasource.validate(form_values)
+        if not form_errors:
+            await datasource.create(values=validated_data)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
-        data = None
-        error = None
+        form_values = None
+        form_errors = None
         status_code = 200
 
     # Render the page
@@ -232,8 +235,8 @@ async def table(request):
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
-        "error": error,
-        "data": data,
+        "form_errors": form_errors,
+        "form_values": form_values,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -253,15 +256,15 @@ async def detail(request):
         raise HTTPException(status_code=404)
 
     if request.method == "POST":
-        data = await request.form()
-        record, error = Record.validate_or_error(data)
-        if not error:
-            await datasource.update(values=dict(record))
+        form_values = await request.form()
+        validated_data, form_errors = datasource.validate(form_values)
+        if not form_errors:
+            await datasource.update(values=validated_data)
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
-        data = item
-        error = None
+        form_values = None if item is None else dict(item)
+        form_errors = None
         status_code = 200
 
     # Render the page
@@ -271,8 +274,8 @@ async def detail(request):
         "year": year,
         "pk": pk,
         "item": item,
-        "data": data,
-        "error": error,
+        "form_values": form_values,
+        "form_errors": form_errors,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 

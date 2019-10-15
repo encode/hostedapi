@@ -51,7 +51,7 @@ def test_invalid_create(client):
     response = client.post(url, data=data, allow_redirects=False)
 
     assert response.status_code == 400
-    assert response.context["error"]["constituency"] == "Must not be blank."
+    assert response.context["form_errors"]["constituency"] == "Must not be blank."
 
 
 def test_valid_create(client):
@@ -88,7 +88,7 @@ def test_invalid_edit(client):
     response = client.post(url, data=data, allow_redirects=False)
 
     assert response.status_code == 400
-    assert response.context["error"]["constituency"] == "Must not be blank."
+    assert response.context["form_errors"]["constituency"] == "Must not be blank."
 
 
 def test_valid_edit(client):
