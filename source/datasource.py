@@ -24,10 +24,58 @@ class TableDataSource:
         self.url = "/" + table["identity"]
         self.table = table
         self.columns = columns
+        self.query_limit = None
+        self.query_offset = None
+
+        fields = {}
+        for column in columns:
+            if column['datatype'] == 'string':
+                fields[column['identity']] = typesystem.String(title=column['name'])
+            elif column['datatype'] == 'integer':
+                fields[column['identity']] = typesystem.Integer(title=column['name'])
+        self.schema = type('Schema', (typesystem.Schema,), fields)
+
+    def limit(self, limit):
+        self.query_limit = limit
+        return self
+
+    def offset(self, offset):
+        self.query_offset = offset
+        return self
+
+    def search(self, search_term):
+        self.search_term = search_term
+        return self
 
     async def count(self):
         query = tables.row.count().where(tables.row.c.table == self.table["pk"])
         return await database.fetch_val(query)
+
+    async def all(self):
+        query = tables.row.select().where(tables.row.c.table == self.table["pk"])
+        rows = await database.fetch_all(query)
+        rows = rows[self.query_offset:self.query_offset+self.query_limit]
+        return [RowDataItem(self.table, row) for row in rows]
+
+
+class RowDataItem:
+    def __init__(self, table, row):
+        self.table = table
+        self.row = row
+
+    def __getitem__(self, key):
+        return self.row['data'][key]
+
+    def __str__(self):
+        return f"{self['first_name']} {self['surname']}"
+
+    @property
+    def url(self):
+        return "/" + self.table["identity"] + "/" + self.row["uuid"]
+
+    @property
+    def delete_url(self):
+        return "/" + self.table["identity"] + "/" + self.row["uuid"] + "/delete"
 
 
 class Record(typesystem.Schema):

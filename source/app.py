@@ -55,10 +55,9 @@ async def table(request):
     if year not in (2017, 2015):
         raise HTTPException(status_code=404)
 
-    i = await load_datasource(f"uk-general-election-{year}")
-    assert i is not None
+    datasource = await load_datasource(f"uk-general-election-{year}")
 
-    datasource = ElectionDataSource(app=app, year=year)
+    # datasource = ElectionDataSource(app=app, year=year)
     columns = {key: field.title for key, field in datasource.schema.fields.items()}
 
     # Get some normalised information from URL query parameters
