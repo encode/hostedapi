@@ -1,37 +1,146 @@
-"""Populate election table
+"""Create initial dynamic tables
 
-Revision ID: b25b43456696
-Revises: dff1bea4f56b
-Create Date: 2019-10-07 10:18:27.626402
+Revision ID: c609270e720d
+Revises: e13b872e5e22
+Create Date: 2019-10-16 08:47:46.675150
 
 """
 from alembic import op
-import sqlalchemy
+import sqlalchemy as sa
+import datetime
+import uuid
+
 
 # revision identifiers, used by Alembic.
-revision = 'b25b43456696'
-down_revision = 'dff1bea4f56b'
+revision = 'c609270e720d'
+down_revision = 'e13b872e5e22'
 branch_labels = None
 depends_on = None
 
-metadata = sqlalchemy.MetaData()
 
-election = sqlalchemy.Table(
-    "election",
+metadata = sa.MetaData()
+
+table = sa.Table(
+    "table",
     metadata,
-    sqlalchemy.Column("pk", sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column("year", sqlalchemy.Integer),
-    sqlalchemy.Column("constituency", sqlalchemy.String),
-    sqlalchemy.Column("surname", sqlalchemy.String),
-    sqlalchemy.Column("first_name", sqlalchemy.String),
-    sqlalchemy.Column("party", sqlalchemy.String),
-    sqlalchemy.Column("votes", sqlalchemy.Integer),
+    sa.Column("pk", sa.Integer, primary_key=True),
+    sa.Column("created_at", sa.DateTime, index=True),
+    sa.Column("identity", sa.String, index=True),
+    sa.Column("name", sa.String),
 )
 
 
+column = sa.Table(
+    "column",
+    metadata,
+    sa.Column("pk", sa.Integer, primary_key=True),
+    sa.Column("created_at", sa.DateTime, index=True),
+    sa.Column("identity", sa.String),
+    sa.Column("name", sa.String),
+    sa.Column("datatype", sa.String),
+    sa.Column("table", sa.Integer, index=True),
+    sa.Column("position", sa.Integer),
+)
+
+
+row = sa.Table(
+    "row",
+    metadata,
+    sa.Column("pk", sa.Integer, primary_key=True),
+    sa.Column("created_at", sa.DateTime, index=True),
+    sa.Column("uuid", sa.String, index=True),
+    sa.Column("table", sa.Integer, index=True),
+    sa.Column("data", sa.JSON),
+    sa.Column("search_text", sa.String),
+)
+
 
 def upgrade():
-    values = [
+    values = [{
+        'created_at': datetime.datetime.now(),
+        'identity': 'uk-general-election-2015',
+        'name': 'UK General Election 2015',
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'uk-general-election-2017',
+        'name': 'UK General Election 2017',
+    }]
+    op.bulk_insert(table, values)
+
+    values = [{
+        'created_at': datetime.datetime.now(),
+        'identity': 'constituency',
+        'name': 'Constituency',
+        'datatype': 'string',
+        'table': 1,
+        'position': 1,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'surname',
+        'name': 'Surname',
+        'datatype': 'string',
+        'table': 1,
+        'position': 2,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'first_name',
+        'name': 'First Name',
+        'datatype': 'string',
+        'table': 1,
+        'position': 3,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'party',
+        'name': 'Party',
+        'datatype': 'string',
+        'table': 1,
+        'position': 4,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'votes',
+        'name': 'Votes',
+        'datatype': 'integer',
+        'table': 1,
+        'position': 5,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'constituency',
+        'name': 'Constituency',
+        'datatype': 'string',
+        'table': 2,
+        'position': 1,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'surname',
+        'name': 'Surname',
+        'datatype': 'string',
+        'table': 2,
+        'position': 2,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'first_name',
+        'name': 'First Name',
+        'datatype': 'string',
+        'table': 2,
+        'position': 3,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'party',
+        'name': 'Party',
+        'datatype': 'string',
+        'table': 2,
+        'position': 4,
+    }, {
+        'created_at': datetime.datetime.now(),
+        'identity': 'votes',
+        'name': 'Votes',
+        'datatype': 'integer',
+        'table': 2,
+        'position': 5,
+    }]
+    op.bulk_insert(column, values)
+
+    row_values = [
         {
             "year": 2015,
             "constituency": "Aldershot",
@@ -58233,9 +58342,28 @@ def upgrade():
             "votes": 624,
         },
     ]
-    op.bulk_insert(election, values)
+    values = []
+    for row_value in row_values:
+        year = row_value.pop("year")
+        search_text = " ".join([
+            row_value["constituency"],
+            row_value["surname"],
+            row_value["first_name"],
+            row_value["party"],
+        ])
+        values.append({
+            "created_at": datetime.datetime.now(),
+            "uuid": uuid.uuid4(),
+            "table": {2015: 1, 2017: 2}[year],
+            "data": row_value,
+            "search_text": search_text
+        })
+    op.bulk_insert(row, values)
 
 
 def downgrade():
-    query = election.delete()
+    query = table.delete()
+    op.execute(query)
+
+    query = column.delete()
     op.execute(query)

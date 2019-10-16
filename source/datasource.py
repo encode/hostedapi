@@ -3,6 +3,33 @@ from source import tables
 import typesystem
 
 
+async def load_datasource(table_identity):
+    query = tables.table.select().where(tables.table.c.identity == table_identity)
+    table = await database.fetch_one(query)
+    if table is None:
+        return None
+
+    query = (
+        tables.column.select()
+        .where(tables.column.c.table == table["pk"])
+        .order_by(tables.column.c.position)
+    )
+    columns = await database.fetch_all(query)
+    return TableDataSource(table, columns)
+
+
+class TableDataSource:
+    def __init__(self, table, columns):
+        self.name = table["name"]
+        self.url = "/" + table["identity"]
+        self.table = table
+        self.columns = columns
+
+    async def count(self):
+        query = tables.row.count().where(tables.row.c.table == self.table["pk"])
+        return await database.fetch_val(query)
+
+
 class Record(typesystem.Schema):
     constituency = typesystem.String(title="Constituency", max_length=100)
     surname = typesystem.String(title="Surname", max_length=100)

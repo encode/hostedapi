@@ -4,7 +4,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
-from source.datasource import ElectionDataSource
+from source.datasource import ElectionDataSource, load_datasource
 import databases
 import math
 import typesystem
@@ -33,8 +33,8 @@ async def dashboard(request):
     rows = []
 
     datasources = [
-        ElectionDataSource(app=app, year=2017),
-        ElectionDataSource(app=app, year=2015),
+        await load_datasource("uk-general-election-2017"),
+        await load_datasource("uk-general-election-2015"),
     ]
     for datasource in datasources:
         text = datasource.name
@@ -54,6 +54,9 @@ async def table(request):
     year = request.path_params["year"]
     if year not in (2017, 2015):
         raise HTTPException(status_code=404)
+
+    i = await load_datasource(f"uk-general-election-{year}")
+    assert i is not None
 
     datasource = ElectionDataSource(app=app, year=year)
     columns = {key: field.title for key, field in datasource.schema.fields.items()}
