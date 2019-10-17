@@ -59,3 +59,13 @@
   </div>
 </div>
 {% endblock %}
+
+{% block tail %}
+{% if form_errors %}
+<script type="text/javascript">
+  $('#newRowModal').removeClass('fade')
+  $('#newRowModal').modal('show');
+  $('#newRowModal').addClass('fade')
+</script>
+{% endif %}
+{% endblock %}

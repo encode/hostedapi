@@ -5,6 +5,8 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
 from source.datasource import load_datasource_or_404
+from slugify import slugify
+import datetime
 import databases
 import math
 import typesystem
@@ -18,6 +20,10 @@ if settings.SENTRY_DSN:  # pragma: nocover
 app.mount("/static", statics, name="static")
 
 
+class NewTableSchema(typesystem.Schema):
+    name = typesystem.String(max_length=100)
+
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
@@ -28,7 +34,7 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.route("/", name="dashboard")
+@app.route("/", name="dashboard", methods=["GET", "POST"])
 async def dashboard(request):
     rows = []
 
@@ -42,14 +48,30 @@ async def dashboard(request):
         count = await datasource.count()
         rows.append({"text": text, "url": url, "count": count})
 
+    if request.method == "POST":
+        form_values = await request.form()
+        validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
+        if not form_errors:
+            insert_data = dict(validated_data)
+            insert_data["created_at"] = datetime.datetime.now()
+            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
+            query = tables.table.insert()
+            await database.execute(query, values=insert_data)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        form_values = None
+        form_errors = None
+        status_code = 200
+
     template = "dashboard.html"
     context = {
         "request": request,
         "rows": rows,
-        "form_values": None,
-        "form_errors": None,
+        "form_values": form_values,
+        "form_errors": form_errors,
     }
-    return templates.TemplateResponse(template, context)
+    return templates.TemplateResponse(template, context, status_code=status_code)
 
 
 @app.route("/tables/{table_id}", methods=["GET", "POST"], name="table")
