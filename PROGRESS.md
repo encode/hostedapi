@@ -156,3 +156,17 @@ We could resolve this issue by having an async client, based on `httpx`.
 It's not as elegant to create new schema classes as I'd like it to be. Also I'd prefer to see
 it validating into raw dictionary data types, rather than object instances. For now I'm just
 working around these issues in the codebase.
+
+# Day 8
+
+Started implementing controls for dynamic tables. Allowing users to create new tables,
+and add or delete columns from tables.
+
+One particular thing that jumps out here is that typesystem doesn't yet support async validations,
+so there's no graceful way to perform uniqueness validation for a field against the database.
+
+Our tests are also a little bit threadbare because they don't currently test data persistence,
+but instead just ensure that the expected response codes / redirects / page contexts are applied.
+
+It's also starting to get closer to the point where I'd like to be using an ORM, rather than
+working with SQLAlchemy core queries directly.
