@@ -29,6 +29,7 @@
               <th scope="col">Name</th>
               <th scope="col">Identity</th>
               <th scope="col">Data Type</th>
+              <th style="width: 20px"></th>
             </tr>
           </thead>
           <tbody>
@@ -37,6 +38,7 @@
               <td>{{ column.name }}</td>
               <td><code>"{{ column.identity }}"</code></td>
               <td><code>{{ column.datatype }}</code></td>
+              <td><a href="#" class="oi oi-x" title="delete" aria-hidden="true" data-toggle="modal" data-target="#deleteColumnModal" data-column-name="{{ column.name }}" data-column-url="{{ url_for('delete-column', table_id=table_id, column_id=column.identity) }}"></a></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -82,6 +84,27 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="deleteColumnModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Delete Column</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure?
+      </div>
+      <div class="modal-footer">
+        <form id="columnDeleteForm" action="#" method="POST">
+          <button type="submit" class="btn btn-outline-danger"><span class="oi oi-x" title="details" aria-hidden="true"></span> Confirm Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block tail %}
@@ -92,4 +115,17 @@
   $('#newColumnModal').addClass('fade')
 </script>
 {% endif %}
+
+<script type="text/javascript">
+$('#deleteColumnModal').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget) // Button that triggered the modal
+  var columnName = button.data('column-name') // Extract info from data-* attributes
+  var columnURL = button.data('column-url') // Extract info from data-* attributes
+  // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+  // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+  var modal = $(this)
+  modal.find('.modal-body').text('Are you sure you want to delete the "' + columnName + '" column?')
+  modal.find('#columnDeleteForm').attr('action', columnURL)
+})
+</script>
 {% endblock %}

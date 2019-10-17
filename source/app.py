@@ -55,6 +55,13 @@ async def dashboard(request):
         form_values = await request.form()
         validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
         if not form_errors:
+            identity = slugify(validated_data["name"], to_lower=True)
+            query = tables.table.select().where(tables.table.c.identity == identity)
+            table = await database.fetch_one(query)
+            if table is not None:
+                form_errors = {"name": "A table with this name already exists."}
+
+        if not form_errors:
             insert_data = dict(validated_data)
             insert_data["created_at"] = datetime.datetime.now()
             insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
@@ -161,6 +168,17 @@ async def columns(request):
         form_values = await request.form()
         validated_data, form_errors = NewColumnSchema.validate_or_error(form_values)
         if not form_errors:
+            identity = slugify(validated_data["name"], to_lower=True)
+            query = (
+                tables.column.select()
+                .where(tables.column.c.table == datasource.table["pk"])
+                .where(tables.column.c.identity == identity)
+            )
+            column = await database.fetch_one(query)
+            if column is not None:
+                form_errors = {"name": "A column with this name already exists."}
+
+        if not form_errors:
             position = (
                 1 if not datasource.columns else datasource.columns[-1]["position"] + 1
             )
@@ -190,6 +208,28 @@ async def columns(request):
         "form_values": form_values,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
+
+
+@app.route(
+    "/tables/{table_id}/columns/{column_id}/delete",
+    methods=["POST"],
+    name="delete-column",
+)
+async def delete_column(request):
+    table_id = request.path_params["table_id"]
+    column_id = request.path_params["column_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+    if column_id not in datasource.schema.fields:
+        raise HTTPException(status_code=404)
+
+    query = (
+        tables.column.delete()
+        .where(tables.column.c.table == datasource.table["pk"])
+        .where(tables.column.c.identity == column_id)
+    )
+    await database.execute(query)
+    url = request.url_for("columns", table_id=table_id)
+    return RedirectResponse(url=url, status_code=303)
 
 
 @app.route("/tables/{table_id}/{row_uuid}", methods=["GET", "POST"], name="detail")
