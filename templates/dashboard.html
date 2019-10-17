@@ -11,6 +11,14 @@
       </nav>
     </div>
 
+    <div class="row">
+      <div class="col-md-12">
+        <div style="float: right">
+        <button class="btn btn-outline-primary" type="button" id="buttonNewTable" data-toggle="modal" data-target="#newTableModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Table</button>
+      </div>
+      </div>
+    </div>
+
     <div class="row pt-3">
       <div class="col-md-12">
         <ul class="list-group">
@@ -22,4 +30,32 @@
     </div>
   </div>
 </main>
+
+
+<div class="modal fade" id="newTableModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">New Table</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ request.url }}" method="POST">
+        <div class="modal-body">
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label">Name</label>
+            <div class="col-sm-9">
+              <input type="text" name="name" class="form-control {% if form_errors.name %}is-invalid{% endif %}" value="{{ form_values.name }}">
+               {% if form_errors.name %}<div class="invalid-feedback">{{ form_errors.name }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

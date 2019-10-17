@@ -37,6 +37,16 @@ def test_table(client):
     assert response.template.name == "table.html"
 
 
+def test_columns(client):
+    """
+    Ensure that the tabular column results render the 'columns.html' template.
+    """
+    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.template.name == "columns.html"
+
+
 def test_detail(client, row_uuid):
     """
     Ensure that the detail pages renders the 'detail.html' template.

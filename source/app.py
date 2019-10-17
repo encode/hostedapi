@@ -43,7 +43,12 @@ async def dashboard(request):
         rows.append({"text": text, "url": url, "count": count})
 
     template = "dashboard.html"
-    context = {"request": request, "rows": rows}
+    context = {
+        "request": request,
+        "rows": rows,
+        "form_values": None,
+        "form_errors": None,
+    }
     return templates.TemplateResponse(template, context)
 
 
@@ -107,6 +112,7 @@ async def table(request):
     context = {
         "request": request,
         "schema": datasource.schema,
+        "table_id": table_id,
         "table_name": datasource.name,
         "table_url": datasource.url,
         "queryset": queryset,
@@ -117,6 +123,25 @@ async def table(request):
         "form_values": form_values,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
+
+
+@app.route("/tables/{table_id}/columns", methods=["GET"], name="columns")
+async def columns(request):
+    table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+
+    # Render the page
+    template = "columns.html"
+    context = {
+        "request": request,
+        "table_id": table_id,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
+        "columns": datasource.columns,
+        "form_errors": None,
+        "form_values": None,
+    }
+    return templates.TemplateResponse(template, context)
 
 
 @app.route("/tables/{table_id}/{row_uuid}", methods=["GET", "POST"], name="detail")
