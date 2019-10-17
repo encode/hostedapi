@@ -4,7 +4,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
-from source.datasource import load_datasource_or_404
+from source.datasource import load_datasources, load_datasource_or_404
 from slugify import slugify
 import datetime
 import databases
@@ -38,10 +38,8 @@ async def shutdown():
 async def dashboard(request):
     rows = []
 
-    datasources = [
-        await load_datasource_or_404(app, "uk-general-election-2017"),
-        await load_datasource_or_404(app, "uk-general-election-2015"),
-    ]
+    datasources = await load_datasources(app)
+
     for datasource in datasources:
         text = datasource.name
         url = datasource.url
