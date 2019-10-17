@@ -14,6 +14,7 @@
 
     <div class="row">
       <div class="col-md-6">
+        {% if table_has_columns %}
           <form class="form-inline" target=".">
           <div class="input-group mb-3" style="width: 100%">
             <input name="search" {% if search_term %}value="{{ search_term }}"{% endif %} type="search" class="form-control" aria-label="Search" aria-describedby="button-search">
@@ -22,59 +23,72 @@
             </div>
           </div>
           </form>
+          {% endif %}
       </div>
       <div class="col-md-6">
         <div style="float: right">
         <a class="btn btn-outline-secondary" type="button" id="buttonEditColumns" href="{{ url_for('columns', table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
+        {% if table_has_columns %}
         <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
+        {% endif %}
       </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-12">
-        <table class="table">
-          <thead>
-            <tr>
-              {% for control in column_controls %}
-              <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
-                {% if control.url %}
-                  <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
-                {% endif %}
-                {{ control.text }}
-                {% if control.url %}
-                  </a>
-                {% endif %}
-              </th>
+    {% if table_has_columns %}
+      <div class="row">
+        <div class="col-md-12">
+          <table class="table">
+            <thead>
+              <tr>
+                {% for control in column_controls %}
+                <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
+                  {% if control.url %}
+                    <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
+                  {% endif %}
+                  {{ control.text }}
+                  {% if control.url %}
+                    </a>
+                  {% endif %}
+                </th>
+                {% endfor %}
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in queryset %}
+              <tr>
+                {% for key in schema.fields.keys() %}
+                  <td>{{ item[key] }}</td>
+                {% endfor %}
+                <td><a href="{{ item.url }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
+              </tr>
               {% endfor %}
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in queryset %}
-            <tr>
-              {% for key in schema.fields.keys() %}
-                <td>{{ item[key] }}</td>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        {% if page_controls %}
+        <div class="col">
+          <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+              {% for control in page_controls %}
+              <li class="page-item {% if control.is_disabled %}disabled{% endif %} {% if control.is_active %}active{% endif %}"><a class="page-link" {% if control.url %}href="{{ control.url }}"{% endif %}>{{ control.text }}</a></li>
               {% endfor %}
-              <td><a href="{{ item.url }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
       </div>
-    </div>
-    <div class="row">
-      {% if page_controls %}
-      <div class="col">
-        <nav aria-label="Page navigation example">
-          <ul class="pagination justify-content-center">
-            {% for control in page_controls %}
-            <li class="page-item {% if control.is_disabled %}disabled{% endif %} {% if control.is_active %}active{% endif %}"><a class="page-link" {% if control.url %}href="{{ control.url }}"{% endif %}>{{ control.text }}</a></li>
-            {% endfor %}
-          </ul>
-        </nav>
+    {% else %}
+      <div class="row pt-3">
+        <div class="col-md-12">
+          <div class="alert alert-warning" role="alert" style="text-align: center; padding: 30px;">
+          <em>This table does not have any columns yet.</em>
+          </div>
+        </div>
       </div>
-      {% endif %}
-    </div>
+    {% endif %}
   </div>
 </main>
 

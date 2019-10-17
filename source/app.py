@@ -135,6 +135,7 @@ async def table(request):
         "table_id": table_id,
         "table_name": datasource.name,
         "table_url": datasource.url,
+        "table_has_columns": bool(datasource.schema.fields),
         "queryset": queryset,
         "search_term": search_term,
         "column_controls": column_controls,
