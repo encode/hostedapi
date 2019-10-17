@@ -137,9 +137,6 @@ class RowDataItem:
     def __getitem__(self, key):
         return self.row["data"][key]
 
-    def __str__(self):
-        return f"{self['first_name']} {self['surname']}"
-
     @property
     def url(self):
         return self.app.url_path_for(
