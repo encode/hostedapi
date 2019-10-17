@@ -4,7 +4,7 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
-from source.datasource import ElectionDataSource
+from source.datasource import load_datasource_or_404
 import databases
 import math
 import typesystem
@@ -33,8 +33,8 @@ async def dashboard(request):
     rows = []
 
     datasources = [
-        ElectionDataSource(app=app, year=2017),
-        ElectionDataSource(app=app, year=2015),
+        await load_datasource_or_404(app, "uk-general-election-2017"),
+        await load_datasource_or_404(app, "uk-general-election-2015"),
     ]
     for datasource in datasources:
         text = datasource.name
@@ -47,15 +47,14 @@ async def dashboard(request):
     return templates.TemplateResponse(template, context)
 
 
-@app.route("/uk-general-election-{year:int}", methods=["GET", "POST"], name="table")
+@app.route("/tables/{table_id}", methods=["GET", "POST"], name="table")
 async def table(request):
     PAGE_SIZE = 10
 
-    year = request.path_params["year"]
-    if year not in (2017, 2015):
-        raise HTTPException(status_code=404)
+    table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
 
-    datasource = ElectionDataSource(app=app, year=year)
+    # datasource = ElectionDataSource(app=app, year=year)
     columns = {key: field.title for key, field in datasource.schema.fields.items()}
 
     # Get some normalised information from URL query parameters
@@ -120,17 +119,13 @@ async def table(request):
     return templates.TemplateResponse(template, context, status_code=status_code)
 
 
-@app.route(
-    "/uk-general-election-{year:int}/{pk:int}", methods=["GET", "POST"], name="detail"
-)
+@app.route("/tables/{table_id}/{row_uuid}", methods=["GET", "POST"], name="detail")
 async def detail(request):
-    year = request.path_params["year"]
-    pk = request.path_params["pk"]
-
-    datasource = ElectionDataSource(app=app, year=year)
-    datasource = datasource.filter(pk=pk)
+    table_id = request.path_params["table_id"]
+    row_uuid = request.path_params["row_uuid"]
+    datasource = await load_datasource_or_404(app, table_id)
+    datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
-
     if item is None:
         raise HTTPException(status_code=404)
 
@@ -162,24 +157,18 @@ async def detail(request):
     return templates.TemplateResponse(template, context, status_code=status_code)
 
 
-@app.route(
-    "/uk-general-election-{year:int}/{pk:int}/delete",
-    methods=["POST"],
-    name="delete-row",
-)
+@app.route("/tables/{table_id}/{row_uuid}/delete", methods=["POST"], name="delete-row")
 async def delete_row(request):
-    year = request.path_params["year"]
-    pk = request.path_params["pk"]
-
-    datasource = ElectionDataSource(app=app, year=year)
-    datasource = datasource.filter(pk=pk)
+    table_id = request.path_params["table_id"]
+    row_uuid = request.path_params["row_uuid"]
+    datasource = await load_datasource_or_404(app, table_id)
+    datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
-
     if item is None:
         raise HTTPException(status_code=404)
 
     await item.delete()
-    url = request.url_for("table", year=year)
+    url = request.url_for("table", table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 
