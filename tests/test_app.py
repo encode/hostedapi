@@ -72,6 +72,19 @@ def test_invalid_create_table(client):
     assert response.context["form_errors"]["name"] == "Must not be blank."
 
 
+def test_invalid_create_duplicate_table(client):
+    url = app.url_path_for("dashboard")
+    data = {"name": "UK General Election 2017"}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.status_code == 400
+    assert (
+        response.context["form_errors"]["name"]
+        == "A table with this name already exists."
+    )
+
+
 def test_valid_create_table(client):
     url = app.url_path_for("dashboard")
     data = {"name": "A new table"}

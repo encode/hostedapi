@@ -55,6 +55,13 @@ async def dashboard(request):
         form_values = await request.form()
         validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
         if not form_errors:
+            identity = slugify(validated_data["name"], to_lower=True)
+            query = tables.table.select().where(tables.table.c.identity == identity)
+            table = await database.fetch_one(query)
+            if table is not None:
+                form_errors = {"name": "A table with this name already exists."}
+
+        if not form_errors:
             insert_data = dict(validated_data)
             insert_data["created_at"] = datetime.datetime.now()
             insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
