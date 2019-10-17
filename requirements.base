@@ -8,6 +8,7 @@
 # Application
 aiofiles==0.4.*
 alembic==1.*
+awesome-slugify==1.*
 databases[postgresql]==0.2.*
 jinja2==2.*
 python-multipart==0.0.5

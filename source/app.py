@@ -4,7 +4,9 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
-from source.datasource import load_datasource_or_404
+from source.datasource import load_datasources, load_datasource_or_404
+from slugify import slugify
+import datetime
 import databases
 import math
 import typesystem
@@ -18,6 +20,15 @@ if settings.SENTRY_DSN:  # pragma: nocover
 app.mount("/static", statics, name="static")
 
 
+class NewTableSchema(typesystem.Schema):
+    name = typesystem.String(max_length=100)
+
+
+class NewColumnSchema(typesystem.Schema):
+    name = typesystem.String(max_length=100)
+    datatype = typesystem.Choice(choices=["string", "integer"])
+
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
@@ -28,23 +39,42 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.route("/", name="dashboard")
+@app.route("/", name="dashboard", methods=["GET", "POST"])
 async def dashboard(request):
     rows = []
 
-    datasources = [
-        await load_datasource_or_404(app, "uk-general-election-2017"),
-        await load_datasource_or_404(app, "uk-general-election-2015"),
-    ]
+    datasources = await load_datasources(app)
+
     for datasource in datasources:
         text = datasource.name
         url = datasource.url
         count = await datasource.count()
         rows.append({"text": text, "url": url, "count": count})
 
+    if request.method == "POST":
+        form_values = await request.form()
+        validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
+        if not form_errors:
+            insert_data = dict(validated_data)
+            insert_data["created_at"] = datetime.datetime.now()
+            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
+            query = tables.table.insert()
+            await database.execute(query, values=insert_data)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        form_values = None
+        form_errors = None
+        status_code = 200
+
     template = "dashboard.html"
-    context = {"request": request, "rows": rows}
-    return templates.TemplateResponse(template, context)
+    context = {
+        "request": request,
+        "rows": rows,
+        "form_values": form_values,
+        "form_errors": form_errors,
+    }
+    return templates.TemplateResponse(template, context, status_code=status_code)
 
 
 @app.route("/tables/{table_id}", methods=["GET", "POST"], name="table")
@@ -107,12 +137,55 @@ async def table(request):
     context = {
         "request": request,
         "schema": datasource.schema,
+        "table_id": table_id,
         "table_name": datasource.name,
         "table_url": datasource.url,
+        "table_has_columns": bool(datasource.schema.fields),
+        "table_has_rows": search_term or list(queryset),
         "queryset": queryset,
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,
+        "form_errors": form_errors,
+        "form_values": form_values,
+    }
+    return templates.TemplateResponse(template, context, status_code=status_code)
+
+
+@app.route("/tables/{table_id}/columns", methods=["GET", "POST"], name="columns")
+async def columns(request):
+    table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+
+    if request.method == "POST":
+        form_values = await request.form()
+        validated_data, form_errors = NewColumnSchema.validate_or_error(form_values)
+        if not form_errors:
+            position = (
+                1 if not datasource.columns else datasource.columns[-1]["position"] + 1
+            )
+            insert_data = dict(validated_data)
+            insert_data["table"] = datasource.table["pk"]
+            insert_data["created_at"] = datetime.datetime.now()
+            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
+            insert_data["position"] = position
+            query = tables.column.insert()
+            await database.execute(query, values=insert_data)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        form_values = None
+        form_errors = None
+        status_code = 200
+
+    # Render the page
+    template = "columns.html"
+    context = {
+        "request": request,
+        "table_id": table_id,
+        "table_name": datasource.name,
+        "table_url": datasource.url,
+        "columns": datasource.columns,
         "form_errors": form_errors,
         "form_values": form_values,
     }

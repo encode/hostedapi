@@ -37,6 +37,16 @@ def test_table(client):
     assert response.template.name == "table.html"
 
 
+def test_columns(client):
+    """
+    Ensure that the tabular column results render the 'columns.html' template.
+    """
+    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.template.name == "columns.html"
+
+
 def test_detail(client, row_uuid):
     """
     Ensure that the detail pages renders the 'detail.html' template.
@@ -50,6 +60,47 @@ def test_detail(client, row_uuid):
 
 
 # Actions
+
+
+def test_invalid_create_table(client):
+    url = app.url_path_for("dashboard")
+    data = {"name": ""}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.status_code == 400
+    assert response.context["form_errors"]["name"] == "Must not be blank."
+
+
+def test_valid_create_table(client):
+    url = app.url_path_for("dashboard")
+    data = {"name": "A new table"}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+def test_invalid_create_column(client):
+    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    data = {"name": "", "datatype": "nonsense"}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.status_code == 400
+    assert response.context["form_errors"]["name"] == "Must not be blank."
+    assert response.context["form_errors"]["datatype"] == "Not a valid choice."
+
+
+def test_valid_create_column(client):
+    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    data = {"name": "notes", "datatype": "string"}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
 
 
 def test_invalid_create(client):

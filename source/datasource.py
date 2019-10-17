@@ -6,6 +6,12 @@ import typesystem
 import uuid
 
 
+async def load_datasources(app):
+    query = tables.table.select().order_by(tables.table.c.created_at.desc())
+    records = await database.fetch_all(query)
+    return [TableDataSource(app, table) for table in records]
+
+
 async def load_datasource_or_404(app, table_identity):
     query = tables.table.select().where(tables.table.c.identity == table_identity)
     table = await database.fetch_one(query)
@@ -22,7 +28,7 @@ async def load_datasource_or_404(app, table_identity):
 
 
 class TableDataSource:
-    def __init__(self, app, table, columns):
+    def __init__(self, app, table, columns=None):
         self.name = table["name"]
         self.url = app.url_path_for("table", table_id=table["identity"])
         self.app = app
@@ -35,15 +41,18 @@ class TableDataSource:
         self.sort_func = None
         self.sort_reverse = False
 
-        fields = {}
-        for column in columns:
-            if column["datatype"] == "string":
-                fields[column["identity"]] = typesystem.String(
-                    title=column["name"], max_length=100
-                )
-            elif column["datatype"] == "integer":
-                fields[column["identity"]] = typesystem.Integer(title=column["name"])
-        self.schema = type("Schema", (typesystem.Schema,), fields)
+        if columns is not None:
+            fields = {}
+            for column in columns:
+                if column["datatype"] == "string":
+                    fields[column["identity"]] = typesystem.String(
+                        title=column["name"], max_length=100
+                    )
+                elif column["datatype"] == "integer":
+                    fields[column["identity"]] = typesystem.Integer(
+                        title=column["name"]
+                    )
+            self.schema = type("Schema", (typesystem.Schema,), fields)
 
     def limit(self, limit):
         self.query_limit = limit
@@ -127,9 +136,6 @@ class RowDataItem:
 
     def __getitem__(self, key):
         return self.row["data"][key]
-
-    def __str__(self):
-        return f"{self['first_name']} {self['surname']}"
 
     @property
     def url(self):
