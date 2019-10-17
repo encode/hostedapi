@@ -29,7 +29,7 @@
           <tbody>
             {% for key, field in schema.fields.items() %}
             <tr>
-              <th>field.title</th><td>{{ item[key] }}</td>
+              <th>{{ field.title }}</th><td>{{ item[key] }}</td>
             </tr>
             {% endfor %}
           </tbody>
