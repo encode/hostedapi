@@ -14,7 +14,7 @@
 
     <div class="row">
       <div class="col-md-6">
-        {% if table_has_columns %}
+        {% if table_has_columns and table_has_rows %}
           <form class="form-inline" target=".">
           <div class="input-group mb-3" style="width: 100%">
             <input name="search" {% if search_term %}value="{{ search_term }}"{% endif %} type="search" class="form-control" aria-label="Search" aria-describedby="button-search">
@@ -34,7 +34,7 @@
       </div>
       </div>
     </div>
-    {% if table_has_columns %}
+    {% if table_has_columns and table_has_rows %}
       <div class="row">
         <div class="col-md-12">
           <table class="table">
@@ -80,7 +80,7 @@
         </div>
         {% endif %}
       </div>
-    {% else %}
+    {% elif not table_has_columns %}
       <div class="row pt-3">
         <div class="col-md-12">
           <div class="alert alert-warning" role="alert" style="text-align: center; padding: 30px;">
@@ -88,6 +88,14 @@
           </div>
         </div>
       </div>
+      {% elif not table_has_rows %}
+        <div class="row pt-3">
+          <div class="col-md-12">
+            <div class="alert alert-warning" role="alert" style="text-align: center; padding: 30px;">
+            <em>This table does not have any data yet.</em>
+            </div>
+          </div>
+        </div>
     {% endif %}
   </div>
 </main>
