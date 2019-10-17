@@ -124,3 +124,35 @@ Loads the data from a postgres database, rather than a hardcoded data source.
 * Add 'New Row', 'Edit Row', and 'Delete Row' controls.
 * Input validation using `typesystem`.
 * Persist changes to the database.
+
+# Day 7
+
+## Use dynamic table definitions
+
+This work doesn't really change anything visible to the end user, but instead
+changes how we store the data, so that we're using dynamic table definitions,
+rather than pre-defined tables.
+
+* Push all the data manipulation out of endpoints, and into a "DataSource" API.
+* Switch our underlying SQL accesses from using a predefined table, to using dynamic table definitions.
+
+Some issues that I ran into along the way:
+
+#### Data migrations are awkward when they start to involve relationships.
+
+Eg. if we're inserting some records, and then want to associate some other set of records against those,
+then we need to know the primary keys of the data we've inserted. We can actually get at this by using
+standard SQLAlchemy, but that means we're using a completely different type of data access than we're
+using in the app itself, where we use "databases" and SQLAlchemy core.
+
+#### Data access is awkward in test cases.
+
+Right now we're using a synchronous test client, but our data access APIs are async, so the
+two can't easily be used together in the same test case. For now we're just working around the issue.
+We could resolve this issue by having an async client, based on `httpx`.
+
+#### The 'typesystem' API doesn't feel right yet.
+
+It's not as elegant to create new schema classes as I'd like it to be. Also I'd prefer to see
+it validating into raw dictionary data types, rather than object instances. For now I'm just
+working around these issues in the codebase.
