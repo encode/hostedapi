@@ -26,14 +26,17 @@ class TableDataSource:
         self.columns = columns
         self.query_limit = None
         self.query_offset = None
+        self.search_term = None
+        self.sort_func = None
+        self.sort_reverse = False
 
         fields = {}
         for column in columns:
-            if column['datatype'] == 'string':
-                fields[column['identity']] = typesystem.String(title=column['name'])
-            elif column['datatype'] == 'integer':
-                fields[column['identity']] = typesystem.Integer(title=column['name'])
-        self.schema = type('Schema', (typesystem.Schema,), fields)
+            if column["datatype"] == "string":
+                fields[column["identity"]] = typesystem.String(title=column["name"])
+            elif column["datatype"] == "integer":
+                fields[column["identity"]] = typesystem.Integer(title=column["name"])
+        self.schema = type("Schema", (typesystem.Schema,), fields)
 
     def limit(self, limit):
         self.query_limit = limit
@@ -47,14 +50,30 @@ class TableDataSource:
         self.search_term = search_term
         return self
 
+    def order_by(self, column, reverse):
+        self.sort_func = lambda row: row['data'][column]
+        self.sort_reverse = reverse
+        return self
+
+    def apply_query_filters(self, query):
+        query = query.where(tables.row.c.table == self.table["pk"])
+        if self.search_term is not None:
+            query = query.where(tables.row.c.search_text.ilike("%" + self.search_term + "%"))
+        return query
+
     async def count(self):
-        query = tables.row.count().where(tables.row.c.table == self.table["pk"])
+        query = tables.row.count()
+        query = self.apply_query_filters(query)
         return await database.fetch_val(query)
 
     async def all(self):
-        query = tables.row.select().where(tables.row.c.table == self.table["pk"])
+        query = tables.row.select()
+        query = self.apply_query_filters(query)
+        query = query.order_by(tables.row.c.created_at)
         rows = await database.fetch_all(query)
-        rows = rows[self.query_offset:self.query_offset+self.query_limit]
+        if self.sort_func is not None:
+            rows = sorted(rows, key=self.sort_func, reverse=self.sort_reverse)
+        rows = rows[self.query_offset : self.query_offset + self.query_limit]
         return [RowDataItem(self.table, row) for row in rows]
 
 
@@ -64,7 +83,7 @@ class RowDataItem:
         self.row = row
 
     def __getitem__(self, key):
-        return self.row['data'][key]
+        return self.row["data"][key]
 
     def __str__(self):
         return f"{self['first_name']} {self['surname']}"
