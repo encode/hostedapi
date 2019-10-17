@@ -206,6 +206,20 @@ def test_valid_edit(client, row_uuid):
     assert URL(response.headers["location"]).path == expected_redirect
 
 
+def test_column_delete(client, row_uuid):
+    """
+    Test column deletion.
+    """
+    url = app.url_path_for(
+        "delete-column", table_id="uk-general-election-2017", column_id="party"
+    )
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = app.url_path_for("columns", table_id="uk-general-election-2017")
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
 def test_delete(client, row_uuid):
     """
     Test row delete.
@@ -287,6 +301,18 @@ def test_delete_404(client):
     """
     url = app.url_path_for(
         "delete-row", table_id="uk-general-election-2017", row_uuid="does-not-exist"
+    )
+    response = client.post(url)
+    assert response.status_code == 404
+    assert response.template.name == "404.html"
+
+
+def test_column_delete_404(client):
+    """
+    Ensure that column delete pages with an invalid PK render the '404.html' template.
+    """
+    url = app.url_path_for(
+        "delete-column", table_id="uk-general-election-2017", column_id="does-not-exist"
     )
     response = client.post(url)
     assert response.status_code == 404

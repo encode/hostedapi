@@ -210,6 +210,28 @@ async def columns(request):
     return templates.TemplateResponse(template, context, status_code=status_code)
 
 
+@app.route(
+    "/tables/{table_id}/columns/{column_id}/delete",
+    methods=["POST"],
+    name="delete-column",
+)
+async def delete_column(request):
+    table_id = request.path_params["table_id"]
+    column_id = request.path_params["column_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+    if column_id not in datasource.schema.fields:
+        raise HTTPException(status_code=404)
+
+    query = (
+        tables.column.delete()
+        .where(tables.column.c.table == datasource.table["pk"])
+        .where(tables.column.c.identity == column_id)
+    )
+    await database.execute(query)
+    url = request.url_for("columns", table_id=table_id)
+    return RedirectResponse(url=url, status_code=303)
+
+
 @app.route("/tables/{table_id}/{row_uuid}", methods=["GET", "POST"], name="detail")
 async def detail(request):
     table_id = request.path_params["table_id"]
