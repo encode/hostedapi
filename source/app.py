@@ -168,6 +168,17 @@ async def columns(request):
         form_values = await request.form()
         validated_data, form_errors = NewColumnSchema.validate_or_error(form_values)
         if not form_errors:
+            identity = slugify(validated_data["name"], to_lower=True)
+            query = (
+                tables.column.select()
+                .where(tables.column.c.table == datasource.table["pk"])
+                .where(tables.column.c.identity == identity)
+            )
+            column = await database.fetch_one(query)
+            if column is not None:
+                form_errors = {"name": "A column with this name already exists."}
+
+        if not form_errors:
             position = (
                 1 if not datasource.columns else datasource.columns[-1]["position"] + 1
             )

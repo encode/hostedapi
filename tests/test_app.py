@@ -106,6 +106,18 @@ def test_invalid_create_column(client):
     assert response.context["form_errors"]["datatype"] == "Not a valid choice."
 
 
+def test_invalid_create_duplicate_column(client):
+    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    data = {"name": "party", "datatype": "integer"}
+    response = client.post(url, data=data, allow_redirects=False)
+
+    assert response.status_code == 400
+    assert (
+        response.context["form_errors"]["name"]
+        == "A column with this name already exists."
+    )
+
+
 def test_valid_create_column(client):
     url = app.url_path_for("columns", table_id="uk-general-election-2017")
     data = {"name": "notes", "datatype": "string"}
