@@ -220,6 +220,18 @@ def test_column_delete(client, row_uuid):
     assert URL(response.headers["location"]).path == expected_redirect
 
 
+def test_table_delete(client, row_uuid):
+    """
+    Test table delete.
+    """
+    url = app.url_path_for("delete-table", table_id="uk-general-election-2017")
+    response = client.post(url, allow_redirects=False)
+    expected_redirect = app.url_path_for("dashboard")
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
 def test_delete(client, row_uuid):
     """
     Test row delete.
