@@ -97,6 +97,10 @@
           </div>
         </div>
     {% endif %}
+
+    <form id="uploadForm" action="{{ url_for('upload', table_id=table_id) }}" method="POST" enctype="multipart/form-data">
+      <input id="input-b1" name="upload-file" type="file" class="file">
+    </form>
   </div>
 </main>
 
@@ -131,6 +135,21 @@
 {% endblock %}
 
 {% block tail %}
+<script type="text/javascript">
+$("#input-b1").fileinput({
+    msgPlaceholder: "Select a CSV file...",
+    showUpload: false, // hide upload button
+    showRemove: false, // hide remove button
+    showClose: false, // hide 'x' control
+    browseOnZoneClick: true,
+    overwriteInitial: true, // append files to initial preview
+    initialPreviewAsData: true,
+}).on("filebatchselected", function(event, files) {
+    $("#uploadForm").submit();
+});
+
+</script>
+
 {% if form_errors %}
 <script type="text/javascript">
   $('#newRowModal').removeClass('fade')

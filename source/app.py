@@ -6,6 +6,8 @@ from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
 from source.datasource import load_datasources, load_datasource_or_404
 from slugify import slugify
+import chardet
+import csv
 import datetime
 import databases
 import math
@@ -227,6 +229,19 @@ async def delete_table(request):
     await database.execute(query)
 
     url = request.url_for("dashboard")
+    return RedirectResponse(url=url, status_code=303)
+
+
+@app.route("/tables/{table_id}/upload", methods=["POST"], name="upload")
+async def upload(request):
+    table_id = request.path_params["table_id"]
+    form = await request.form()
+    data = await form['upload-file'].read()
+    encoding = chardet.detect(data)['encoding']
+    lines = data.decode(encoding).splitlines()
+    rows = [row for row in csv.reader(lines)]
+    print(rows[20:])
+    url = request.url_for("table", table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 
