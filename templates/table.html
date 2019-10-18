@@ -27,7 +27,7 @@
       </div>
       <div class="col-md-6">
         <div style="float: right">
-        <a class="btn btn-outline-secondary" type="button" id="buttonEditColumns" href="{{ url_for('columns', table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
+        <a class="btn btn-outline-secondary" id="buttonEditColumns" href="{{ url_for('columns', table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
         {% if table_has_columns %}
         <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
         {% endif %}

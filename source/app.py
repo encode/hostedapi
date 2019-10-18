@@ -210,6 +210,26 @@ async def columns(request):
     return templates.TemplateResponse(template, context, status_code=status_code)
 
 
+@app.route("/tables/{table_id}/delete", methods=["POST"], name="delete-table")
+async def delete_table(request):
+    table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+
+    query = tables.column.delete().where(
+        tables.column.c.table == datasource.table["pk"]
+    )
+    await database.execute(query)
+
+    query = tables.row.delete().where(tables.row.c.table == datasource.table["pk"])
+    await database.execute(query)
+
+    query = tables.table.delete().where(tables.table.c.pk == datasource.table["pk"])
+    await database.execute(query)
+
+    url = request.url_for("dashboard")
+    return RedirectResponse(url=url, status_code=303)
+
+
 @app.route(
     "/tables/{table_id}/columns/{column_id}/delete",
     methods=["POST"],

@@ -16,6 +16,7 @@
     <div class="row">
       <div class="col-md-12">
         <div style="float: right">
+        <button class="btn btn-outline-danger" type="button" id="buttonDeleteTable" data-toggle="modal" data-target="#deleteTableModal"><span class="oi oi-x" title="icon name" aria-hidden="true"></span> Delete Table</button>
         <button class="btn btn-outline-primary" type="button" id="buttonNewColumn" data-toggle="modal" data-target="#newColumnModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Column</button>
       </div>
       </div>
@@ -43,6 +44,12 @@
             {% endfor %}
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="row pt-3">
+      <div class="col-md-12">
+
       </div>
     </div>
   </div>
@@ -99,6 +106,28 @@
       </div>
       <div class="modal-footer">
         <form id="columnDeleteForm" action="#" method="POST">
+          <button type="submit" class="btn btn-outline-danger"><span class="oi oi-x" title="details" aria-hidden="true"></span> Confirm Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteTableModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Delete Table</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p><em>This action will delete the entire table.</em></p>
+        <p>Are you sure?</p>
+      </div>
+      <div class="modal-footer">
+        <form id="tableDeleteForm" action="{{ url_for('delete-table', table_id=table_id) }}" method="POST">
           <button type="submit" class="btn btn-outline-danger"><span class="oi oi-x" title="details" aria-hidden="true"></span> Confirm Delete</button>
         </form>
       </div>
