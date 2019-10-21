@@ -41,4 +41,12 @@ def normalize_table(rows):
             [item for idx, item in enumerate(row) if idx not in blank_columns]
             for row in rows
         ]
-    return rows
+
+    # Start from the first completely populated row
+    starting_idx = 0
+    for idx, row in enumerate(rows):
+        if all([item.strip() for item in row]):
+            starting_idx = idx
+            break
+
+    return rows[starting_idx:]

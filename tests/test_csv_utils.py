@@ -4,6 +4,7 @@ from source.csv_utils import normalize_table
 def test_normalize_rows():
     rows = [
         ["", "", ""],
+        ["RESULTS", "", ""],
         ["a", "b", "", "c"],
         ["1", "foo", "", "bar"],
         ["2", "foo", "", "baz"],
