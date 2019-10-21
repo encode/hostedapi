@@ -5,6 +5,7 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
 from source.datasource import load_datasources, load_datasource_or_404
+from source.csv_utils import normalize_table
 from slugify import slugify
 import chardet
 import csv
@@ -242,7 +243,7 @@ async def upload(request):
     data = await form["upload-file"].read()
     encoding = chardet.detect(data)["encoding"]
     lines = data.decode(encoding).splitlines()
-    rows = [row for row in csv.reader(lines)]
+    rows = normalize_table([row for row in csv.reader(lines)])
     column_idents = [slugify(name, to_lower=True) for name in rows[0]]
 
     column_insert_values = [
