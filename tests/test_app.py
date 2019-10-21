@@ -2,6 +2,7 @@ from source.app import app
 from starlette.datastructures import URL
 from starlette.testclient import TestClient
 import pytest
+import tempfile
 
 
 @pytest.fixture
@@ -15,6 +16,17 @@ def row_uuid(client):
     response = client.get(url)
     assert response.status_code == 200
     return response.context["queryset"][0].uuid
+
+
+@pytest.fixture
+def mock_csv():
+    csv = tempfile.TemporaryFile()
+    csv.write(b"name,score\n")
+    csv.write(b"tom,123\n")
+    csv.write(b"lucy,456\n")
+    csv.write(b"rose,789\n")
+    csv.seek(0)
+    return csv
 
 
 def test_dashboard(client):
@@ -241,6 +253,23 @@ def test_delete(client, row_uuid):
     )
     response = client.post(url, allow_redirects=False)
     expected_redirect = app.url_path_for("table", table_id="uk-general-election-2017")
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+def test_upload(client, mock_csv):
+    url = app.url_path_for("dashboard")
+    data = {"name": "new table"}
+    response = client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+    url = app.url_path_for("upload", table_id="new-table")
+    response = client.post(url, files={"upload-file": mock_csv}, allow_redirects=False)
+    expected_redirect = app.url_path_for("table", table_id="new-table")
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect

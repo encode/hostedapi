@@ -5,11 +5,19 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
 from source.datasource import load_datasources, load_datasource_or_404
+from source.csv_utils import (
+    normalize_table,
+    determine_column_types,
+    determine_column_identities,
+)
 from slugify import slugify
+import chardet
+import csv
 import datetime
 import databases
 import math
 import typesystem
+import uuid
 
 
 app = Starlette(debug=settings.DEBUG)
@@ -227,6 +235,59 @@ async def delete_table(request):
     await database.execute(query)
 
     url = request.url_for("dashboard")
+    return RedirectResponse(url=url, status_code=303)
+
+
+@app.route("/tables/{table_id}/upload", methods=["POST"], name="upload")
+async def upload(request):
+    table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+
+    form = await request.form()
+    data = await form["upload-file"].read()
+    encoding = chardet.detect(data)["encoding"]
+    lines = data.decode(encoding).splitlines()
+    rows = normalize_table([row for row in csv.reader(lines)])
+    column_identities = determine_column_identities(rows)
+    column_types, schema = determine_column_types(rows)
+    unvalidated_data = [dict(zip(column_identities, row)) for row in rows[1:]]
+    validated_data = [
+        dict(instance)
+        for instance in typesystem.Array(
+            items=typesystem.Reference(to=schema)
+        ).validate(unvalidated_data, strict=False)
+    ]
+
+    column_insert_values = [
+        {
+            "created_at": datetime.datetime.now(),
+            "name": name,
+            "identity": column_identities[idx],
+            "datatype": column_types[idx],
+            "table": datasource.table["pk"],
+            "position": idx + 1,
+        }
+        for idx, name in enumerate(rows[0])
+    ]
+
+    query = tables.column.insert()
+    await database.execute_many(query, column_insert_values)
+
+    row_insert_values = [
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": datasource.table["pk"],
+            "data": validated_data[idx],
+            "search_text": " ".join(row),
+        }
+        for idx, row in enumerate(rows[1:])
+    ]
+
+    query = tables.row.insert()
+    await database.execute_many(query, row_insert_values)
+
+    url = request.url_for("table", table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 

@@ -84,7 +84,8 @@
       <div class="row pt-3">
         <div class="col-md-12">
           <div class="alert alert-warning" role="alert" style="text-align: center; padding: 30px;">
-          <em>This table does not have any columns yet.</em>
+          <p><em>This table does not have any columns defined yet.</em></p>
+          <p><em>Upload a CSV file, or edit the columns and start adding data.</em></p>
           </div>
         </div>
       </div>
@@ -96,6 +97,12 @@
             </div>
           </div>
         </div>
+    {% endif %}
+
+    {% if not table_has_columns %}
+    <form id="uploadForm" action="{{ url_for('upload', table_id=table_id) }}" method="POST" enctype="multipart/form-data">
+      <input id="uploadInput" name="upload-file" type="file" class="file">
+    </form>
     {% endif %}
   </div>
 </main>
@@ -131,6 +138,21 @@
 {% endblock %}
 
 {% block tail %}
+<script type="text/javascript">
+$("#uploadInput").fileinput({
+    msgPlaceholder: "Select a CSV file...",
+    showUpload: false, // hide upload button
+    showRemove: false, // hide remove button
+    showClose: false, // hide 'x' control
+    browseOnZoneClick: true,
+    overwriteInitial: true, // append files to initial preview
+    initialPreviewAsData: true,
+}).on("filebatchselected", function(event, files) {
+    $("#uploadForm").submit();
+});
+
+</script>
+
 {% if form_errors %}
 <script type="text/javascript">
   $('#newRowModal').removeClass('fade')
