@@ -12,6 +12,7 @@ import datetime
 import databases
 import math
 import typesystem
+import uuid
 
 
 app = Starlette(debug=settings.DEBUG)
@@ -235,12 +236,44 @@ async def delete_table(request):
 @app.route("/tables/{table_id}/upload", methods=["POST"], name="upload")
 async def upload(request):
     table_id = request.path_params["table_id"]
+    datasource = await load_datasource_or_404(app, table_id)
+
     form = await request.form()
-    data = await form['upload-file'].read()
-    encoding = chardet.detect(data)['encoding']
+    data = await form["upload-file"].read()
+    encoding = chardet.detect(data)["encoding"]
     lines = data.decode(encoding).splitlines()
     rows = [row for row in csv.reader(lines)]
-    print(rows[20:])
+    column_idents = [slugify(name, to_lower=True) for name in rows[0]]
+
+    column_insert_values = [
+        {
+            "created_at": datetime.datetime.now(),
+            "name": name,
+            "identity": slugify(name, to_lower=True),
+            "datatype": "string",
+            "table": datasource.table["pk"],
+            "position": idx + 1,
+        }
+        for idx, name in enumerate(rows[0])
+    ]
+
+    query = tables.column.insert()
+    await database.execute_many(query, column_insert_values)
+
+    row_insert_values = [
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": datasource.table["pk"],
+            "data": dict(zip(column_idents, row)),
+            "search_text": " ".join(row),
+        }
+        for row in rows[1:]
+    ]
+
+    query = tables.row.insert()
+    await database.execute_many(query, row_insert_values)
+
     url = request.url_for("table", table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
