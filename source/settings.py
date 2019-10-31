@@ -6,6 +6,8 @@ config = Config()
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 TESTING = config("TESTING", cast=bool, default=False)
+HTTPS_ONLY = config("HTTPS_ONLY", cast=bool, default=False)
+
 DATABASE_URL = config(
     "DATABASE_URL",
     cast=databases.DatabaseURL,

@@ -1,6 +1,7 @@
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.responses import HTMLResponse, RedirectResponse
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import settings, pagination, ordering, search, tables
 from source.resources import database, statics, templates
@@ -21,6 +22,9 @@ import uuid
 
 
 app = Starlette(debug=settings.DEBUG)
+
+if settings.HTTPS_ONLY:  # pragma: nocover
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
