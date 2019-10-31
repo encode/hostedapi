@@ -47,6 +47,14 @@ async def shutdown():
     await database.disconnect()
 
 
+@app.route("/debug")
+async def debug(request):
+    return HTMLResponse(
+        "<pre>Scope: %s\nHeaders: %s\nurl_for: %s</pre>"
+        % (repr(request.scope), repr(request.headers), request.url_for("dashboard"))
+    )  # pragma: nocover
+
+
 @app.route("/", name="dashboard", methods=["GET", "POST"])
 async def dashboard(request):
     rows = []
