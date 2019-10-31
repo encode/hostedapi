@@ -9,7 +9,7 @@ import uuid
 async def load_datasources(app):
     query = tables.table.select().order_by(tables.table.c.created_at.desc())
     records = await database.fetch_all(query)
-    return [TableDataSource(app, table) for table in records]
+    return [TableDataSource(app, table) for table in records if table["identity"]]
 
 
 async def load_datasource_or_404(app, table_identity):
