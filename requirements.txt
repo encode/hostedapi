@@ -43,7 +43,7 @@ typed-ast==1.4.0
 typesystem==0.2.4
 Unidecode==0.4.21
 urllib3==1.25.6
-uvicorn==0.10.0
+uvicorn==0.10.2
 uvloop==0.14.0rc2
 wcwidth==0.1.7
 websockets==8.0.2
