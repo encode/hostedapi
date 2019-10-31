@@ -9,8 +9,6 @@ import uuid
 async def load_datasources(app):
     query = tables.table.select().order_by(tables.table.c.created_at.desc())
     records = await database.fetch_all(query)
-    for table in records if not table["identity"]:
-        print(table["pk"], table["name"])
     return [TableDataSource(app, table) for table in records if table["identity"]]
 
 
