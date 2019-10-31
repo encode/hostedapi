@@ -11,4 +11,4 @@ if [ ! $PORT ]; then
 fi
 
 set -x
-${BIN_PATH}uvicorn source.app:app --port $PORT --host 0.0.0.0 --env-file . ${@}
+${BIN_PATH}uvicorn source.app:app --port $PORT --host 0.0.0.0 --env-file .env ${@}
