@@ -63,5 +63,5 @@ app = Starlette(
     middleware=middleware,
     exception_handlers=exception_handlers,
     on_startup=[database.connect],
-    on_shutdown=[database.disconnect]
+    on_shutdown=[database.disconnect],
 )
