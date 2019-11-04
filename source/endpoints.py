@@ -338,3 +338,21 @@ async def error(request):
     An example error. Switch the `debug` setting to see either tracebacks or 500 pages.
     """
     raise RuntimeError("Oh no")
+
+
+async def not_found(request, exc):
+    """
+    Return an HTTP 404 page.
+    """
+    template = "404.html"
+    context = {"request": request}
+    return templates.TemplateResponse(template, context, status_code=404)
+
+
+async def server_error(request, exc):
+    """
+    Return an HTTP 500 page.
+    """
+    template = "500.html"
+    context = {"request": request}
+    return templates.TemplateResponse(template, context, status_code=500)

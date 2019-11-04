@@ -1,5 +1,6 @@
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
+from starlette.middleware import Middleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import endpoints, settings
@@ -46,13 +47,22 @@ routes = [
     Mount("/static", statics, name="static"),
 ]
 
-app = Starlette(debug=settings.DEBUG, routes=routes)
+middleware = [
+    Middleware(SentryAsgiMiddleware, enabled=settings.SENTRY_DSN),
+    Middleware(HTTPSRedirectMiddleware, enabled=settings.HTTPS_ONLY),
+]
 
-if settings.HTTPS_ONLY:  # pragma: nocover
-    app.add_middleware(HTTPSRedirectMiddleware)
+exception_handlers = {
+    404: endpoints.not_found,
+    500: endpoints.server_error,
+}
 
-if settings.SENTRY_DSN:  # pragma: nocover
-    app.add_middleware(SentryAsgiMiddleware)
+app = Starlette(
+    debug=settings.DEBUG,
+    routes=routes,
+    middleware=middleware,
+    exception_handlers=exception_handlers,
+)
 
 
 @app.on_event("startup")
@@ -63,23 +73,3 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
-
-
-@app.exception_handler(404)
-async def not_found(request, exc):
-    """
-    Return an HTTP 404 page.
-    """
-    template = "404.html"
-    context = {"request": request}
-    return templates.TemplateResponse(template, context, status_code=404)
-
-
-@app.exception_handler(500)
-async def server_error(request, exc):
-    """
-    Return an HTTP 500 page.
-    """
-    template = "500.html"
-    context = {"request": request}
-    return templates.TemplateResponse(template, context, status_code=500)
