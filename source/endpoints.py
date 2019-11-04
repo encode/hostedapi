@@ -29,7 +29,7 @@ class NewColumnSchema(typesystem.Schema):
 async def dashboard(request):
     rows = []
 
-    datasources = await load_datasources(request)
+    datasources = await load_datasources()
 
     for datasource in datasources:
         text = datasource.name
@@ -74,7 +74,7 @@ async def table(request):
     PAGE_SIZE = 10
 
     table_id = request.path_params["table_id"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
 
     # datasource = ElectionDataSource(app=app, year=year)
     columns = {key: field.title for key, field in datasource.schema.fields.items()}
@@ -146,7 +146,7 @@ async def table(request):
 
 async def columns(request):
     table_id = request.path_params["table_id"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
 
     if request.method == "POST":
         form_values = await request.form()
@@ -196,7 +196,7 @@ async def columns(request):
 
 async def delete_table(request):
     table_id = request.path_params["table_id"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
 
     query = tables.column.delete().where(
         tables.column.c.table == datasource.table["pk"]
@@ -215,7 +215,7 @@ async def delete_table(request):
 
 async def upload(request):
     table_id = request.path_params["table_id"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
 
     form = await request.form()
     data = await form["upload-file"].read()
@@ -268,7 +268,7 @@ async def upload(request):
 async def delete_column(request):
     table_id = request.path_params["table_id"]
     column_id = request.path_params["column_id"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
     if column_id not in datasource.schema.fields:
         raise HTTPException(status_code=404)
 
@@ -285,7 +285,7 @@ async def delete_column(request):
 async def detail(request):
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
     datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
     if item is None:
@@ -322,7 +322,7 @@ async def detail(request):
 async def delete_row(request):
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
-    datasource = await load_datasource_or_404(request, table_id)
+    datasource = await load_datasource_or_404(table_id)
     datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
     if item is None:

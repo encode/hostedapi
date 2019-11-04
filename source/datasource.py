@@ -1,18 +1,18 @@
 from starlette.exceptions import HTTPException
-from source.resources import database
+from source.resources import database, url_for
 from source import tables
 import datetime
 import typesystem
 import uuid
 
 
-async def load_datasources(request):
+async def load_datasources():
     query = tables.table.select().order_by(tables.table.c.created_at.desc())
     records = await database.fetch_all(query)
-    return [TableDataSource(request, table) for table in records if table["identity"]]
+    return [TableDataSource(table) for table in records if table["identity"]]
 
 
-async def load_datasource_or_404(request, table_identity):
+async def load_datasource_or_404(table_identity):
     query = tables.table.select().where(tables.table.c.identity == table_identity)
     table = await database.fetch_one(query)
     if table is None:
@@ -24,14 +24,13 @@ async def load_datasource_or_404(request, table_identity):
         .order_by(tables.column.c.position)
     )
     columns = await database.fetch_all(query)
-    return TableDataSource(request, table, columns)
+    return TableDataSource(table, columns)
 
 
 class TableDataSource:
-    def __init__(self, request, table, columns=None):
+    def __init__(self, table, columns=None):
         self.name = table["name"]
-        self.url = request.url_for("table", table_id=table["identity"])
-        self.request = request
+        self.url = url_for("table", table_id=table["identity"])
         self.table = table
         self.columns = columns
         self.query_limit = None
@@ -98,7 +97,7 @@ class TableDataSource:
         if self.sort_func is not None:
             rows = sorted(rows, key=self.sort_func, reverse=self.sort_reverse)
         rows = rows[self.query_offset : self.query_offset + self.query_limit]
-        return [RowDataItem(self.request, self.table, row) for row in rows]
+        return [RowDataItem(self.table, row) for row in rows]
 
     async def get(self):
         query = tables.row.select()
@@ -106,7 +105,7 @@ class TableDataSource:
         row = await database.fetch_one(query)
         if row is None:
             return
-        return RowDataItem(self.request, self.table, row)
+        return RowDataItem(self.table, row)
 
     async def create(self, values):
         insert_values = {
@@ -128,8 +127,7 @@ class TableDataSource:
 
 
 class RowDataItem:
-    def __init__(self, request, table, row):
-        self.request = request
+    def __init__(self, table, row):
         self.table = table
         self.row = row
         self.uuid = row["uuid"]
@@ -139,13 +137,13 @@ class RowDataItem:
 
     @property
     def url(self):
-        return self.request.url_for(
+        return url_for(
             "detail", table_id=self.table["identity"], row_uuid=self.row["uuid"]
         )
 
     @property
     def delete_url(self):
-        return self.request.url_for(
+        return url_for(
             "delete-row", table_id=self.table["identity"], row_uuid=self.row["uuid"]
         )
 
