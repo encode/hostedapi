@@ -1,5 +1,5 @@
 from starlette.applications import Starlette
-from starlette.routing import Route
+from starlette.routing import Route, Mount
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import endpoints, settings
@@ -43,6 +43,7 @@ routes = [
         name="delete-row",
     ),
     Route("/500", endpoints.error),
+    Mount("/static", statics, name="static"),
 ]
 
 app = Starlette(debug=settings.DEBUG, routes=routes)
@@ -52,8 +53,6 @@ if settings.HTTPS_ONLY:  # pragma: nocover
 
 if settings.SENTRY_DSN:  # pragma: nocover
     app.add_middleware(SentryAsgiMiddleware)
-
-app.mount("/static", statics, name="static")
 
 
 @app.on_event("startup")
