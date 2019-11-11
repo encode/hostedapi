@@ -12,9 +12,15 @@ Click==7.0
 coverage==4.5.4
 databases==0.2.6
 h11==0.8.1
+h2==3.1.1
+hpack==3.0.0
+hstspreload==2019.11.4
 httptools==0.0.13
+httpx==0.7.6
+hyperframe==5.2.0
 idna==2.8
 importlib-metadata==0.23
+itsdangerous==1.1.0
 Jinja2==2.10.3
 Mako==1.1.0
 MarkupSafe==1.1.1
@@ -24,7 +30,7 @@ pathspec==0.6.0
 pluggy==0.13.0
 psycopg2-binary==2.8.4
 py==1.8.0
-pyparsing==2.4.2
+pyparsing==2.4.5
 pytest==5.2.2
 pytest-cov==2.8.1
 python-dateutil==2.8.1
@@ -33,8 +39,9 @@ python-editor==1.0.4
 python-multipart==0.0.5
 regex==2019.11.1
 requests==2.22.0
+rfc3986==1.3.2
 sentry-sdk==0.12.3
-six==1.12.0
+six==1.13.0
 SQLAlchemy==1.3.10
 SQLAlchemy-Utils==0.34.2
 starlette==0.12.13
@@ -42,8 +49,8 @@ toml==0.10.0
 typed-ast==1.4.0
 typesystem==0.2.4
 Unidecode==0.4.21
-urllib3==1.25.6
-uvicorn==0.10.3
+urllib3==1.25.7
+uvicorn==0.10.4
 uvloop==0.14.0rc2
 wcwidth==0.1.7
 websockets==8.1

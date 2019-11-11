@@ -13,10 +13,12 @@ databases[postgresql]==0.2.*
 jinja2==2.*
 python-multipart==0.0.5
 sentry-sdk==0.12.*
-starlette==0.12.13
+starlette==0.12.*
 typesystem==0.2.*
 uvicorn==0.10.*
 python-dotenv==0.10.*
+httpx==0.7.*
+itsdangerous==1.*
 
 # Testing (For consistency we still want to install these to production tho.)
 black
