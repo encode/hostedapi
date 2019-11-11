@@ -145,7 +145,7 @@ then we need to know the primary keys of the data we've inserted. We can actuall
 standard SQLAlchemy, but that means we're using a completely different type of data access than we're
 using in the app itself, where we use "databases" and SQLAlchemy core.
 
-#### Data access is awkward in test cases.
+#### Data access is awkward in test cases.
 
 Right now we're using a synchronous test client, but our data access APIs are async, so the
 two can't easily be used together in the same test case. For now we're just working around the issue.
