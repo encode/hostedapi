@@ -17,6 +17,8 @@ starlette==0.12.*
 typesystem==0.2.*
 uvicorn==0.10.*
 python-dotenv==0.10.*
+httpx==0.7.*
+itsdangerous==1.*
 
 # Testing (For consistency we still want to install these to production tho.)
 black

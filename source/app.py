@@ -1,85 +1,72 @@
 from starlette.applications import Starlette
-from starlette.routing import Route, Mount
+from starlette.routing import Router, Route, Mount
+from starlette.middleware import Middleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from source import endpoints, settings
 from source.resources import database, statics, templates
+from source.auth.routes import routes as auth_routes
+from source.mock_github.routes import routes as github_routes
+import httpx
 
 
+# fmt: off
 routes = [
     Route("/", endpoints.dashboard, name="dashboard", methods=["GET", "POST"]),
-    Route("/tables/{table_id}", endpoints.table, methods=["GET", "POST"], name="table"),
-    Route(
-        "/tables/{table_id}/columns",
-        endpoints.columns,
-        methods=["GET", "POST"],
-        name="columns",
-    ),
-    Route(
-        "/tables/{table_id}/delete",
-        endpoints.delete_table,
-        methods=["POST"],
-        name="delete-table",
-    ),
-    Route(
-        "/tables/{table_id}/upload", endpoints.upload, methods=["POST"], name="upload"
-    ),
-    Route(
-        "/tables/{table_id}/columns/{column_id}/delete",
-        endpoints.delete_column,
-        methods=["POST"],
-        name="delete-column",
-    ),
-    Route(
-        "/tables/{table_id}/{row_uuid}",
-        endpoints.detail,
-        methods=["GET", "POST"],
-        name="detail",
-    ),
-    Route(
-        "/tables/{table_id}/{row_uuid}/delete",
-        endpoints.delete_row,
-        methods=["POST"],
-        name="delete-row",
-    ),
+    Route("/tables/{table_id}", endpoints.table, name="table", methods=["GET", "POST"]),
+    Route("/tables/{table_id}/columns", endpoints.columns, name="columns", methods=["GET", "POST"]),
+    Route("/tables/{table_id}/delete", endpoints.delete_table, name="delete-table", methods=["POST"]),
+    Route("/tables/{table_id}/upload", endpoints.upload, name="upload", methods=["POST"]),
+    Route("/tables/{table_id}/columns/{column_id}/delete", endpoints.delete_column, name="delete-column", methods=["POST"]),
+    Route("/tables/{table_id}/{row_uuid}", endpoints.detail, name="detail", methods=["GET", "POST"]),
+    Route("/tables/{table_id}/{row_uuid}/delete", endpoints.delete_row, name="delete-row", methods=["POST"]),
     Route("/500", endpoints.error),
     Mount("/static", statics, name="static"),
+    Mount("/auth", routes=auth_routes, name='auth'),
 ]
 
-app = Starlette(debug=settings.DEBUG, routes=routes)
+if settings.MOCK_GITHUB:
+    routes += [
+        Mount("/mock_github", routes=github_routes, name='mock_github')
+    ]
+    github_client = httpx.AsyncClient(
+        base_url='http://mock',
+        app=Router(routes=github_routes)
+    )
+    github_api_client = httpx.AsyncClient(
+        base_url='http://mock',
+        app=Router(routes=github_routes)
+    )
+    GITHUB_AUTH_URL = '/mock_github/login/oauth/authorize'
 
-if settings.HTTPS_ONLY:  # pragma: nocover
-    app.add_middleware(HTTPSRedirectMiddleware)
-
-if settings.SENTRY_DSN:  # pragma: nocover
-    app.add_middleware(SentryAsgiMiddleware)
-
-
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
-
-
-@app.exception_handler(404)
-async def not_found(request, exc):
-    """
-    Return an HTTP 404 page.
-    """
-    template = "404.html"
-    context = {"request": request}
-    return templates.TemplateResponse(template, context, status_code=404)
+else:  # pragma: nocover
+    github_client = httpx.AsyncClient(base_url='https://github.com/')
+    github_api_client = httpx.AsyncClient(
+        base_url='https://api.github.com/',
+        headers={'accept': 'application/vnd.github.v3+json'}
+    )
+    GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize'
 
 
-@app.exception_handler(500)
-async def server_error(request, exc):
-    """
-    Return an HTTP 500 page.
-    """
-    template = "500.html"
-    context = {"request": request}
-    return templates.TemplateResponse(template, context, status_code=500)
+middleware = [
+    Middleware(SentryAsgiMiddleware, enabled=settings.SENTRY_DSN),
+    Middleware(HTTPSRedirectMiddleware, enabled=settings.HTTPS_ONLY),
+    Middleware(SessionMiddleware, options={
+        'secret_key': settings.SECRET, 'https_only': settings.HTTPS_ONLY
+    })
+]
+
+exception_handlers = {
+    404: endpoints.not_found,
+    500: endpoints.server_error,
+}
+
+app = Starlette(
+    debug=settings.DEBUG,
+    routes=routes,
+    middleware=middleware,
+    exception_handlers=exception_handlers,
+    on_startup=[database.connect],
+    on_shutdown=[database.disconnect],
+)

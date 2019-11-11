@@ -2,6 +2,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from source import settings
 import databases
+import httpx
 
 
 templates = Jinja2Templates(directory="templates")
