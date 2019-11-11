@@ -1,3 +1,8 @@
+This is a progress log for work on the HostedAPI service.
+
+The work is not back-to-back over a continuous period, and days listed don't
+necessarily indicate a full working day.
+
 # Day 1
 
 ### Create the GitHub repo
@@ -170,3 +175,20 @@ but instead just ensure that the expected response codes / redirects / page cont
 
 It's also starting to get closer to the point where I'd like to be using an ORM, rather than
 working with SQLAlchemy core queries directly.
+
+# Intermezzo
+
+Work driven by this on Uvicorn (logging improvements, better deployment defaults).
+
+Work driven by this on Starlette (declarative routing and middleware).
+
+# Day 9
+
+Implemented the GitHub authentication flow.
+
+What's particularly nice here is how we provide a mock GitHub service that is used
+in tests, and in local development. The `MOCK_GITHUB` environment variable switches
+between using the live GitHub API, and using the mock application.
+
+The authentication flow currently just affects the session, and does not create
+a persistent user record.
