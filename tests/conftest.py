@@ -10,6 +10,8 @@ from sqlalchemy_utils import database_exists, create_database, drop_database
 # If we placed it below the application import, it would raise an error
 # informing us that 'TESTING' had already been read from the environment.
 environ["TESTING"] = "True"
+environ["MOCK_GITHUB"] = "True"
+environ["SECRET"] = "TESTING"
 
 
 @pytest.fixture(scope="session", autouse=True)

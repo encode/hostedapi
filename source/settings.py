@@ -6,7 +6,9 @@ config = Config()
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 TESTING = config("TESTING", cast=bool, default=False)
+MOCK_GITHUB = config("MOCK_GITHUB", cast=bool, default=False)
 HTTPS_ONLY = config("HTTPS_ONLY", cast=bool, default=False)
+SECRET = config("SECRET", cast=str)
 
 DATABASE_URL = config(
     "DATABASE_URL",
@@ -18,6 +20,10 @@ if DATABASE_URL.dialect == "postgres":
 
 TEST_DATABASE_URL = DATABASE_URL.replace(database="test_" + DATABASE_URL.database)
 
+
+# GitHub API
+GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", cast=str, default="")
+GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", cast=str, default="")
 
 # The Sentry DSN is a unique identifier for our app when connecting to Sentry
 # See https://docs.sentry.io/platforms/python/#connecting-the-sdk-to-sentry
