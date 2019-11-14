@@ -1,6 +1,8 @@
 from starlette.responses import RedirectResponse
 from starlette.datastructures import URL
-from source import settings
+from source import settings, tables
+from source.resources import database
+import datetime
 
 
 async def login(request):
@@ -8,7 +10,6 @@ async def login(request):
 
     query = {
         "client_id": settings.GITHUB_CLIENT_ID,
-        "scope": "user:email",
         "redirect_url": request.url_for("auth:callback"),
     }
     url = URL(GITHUB_AUTH_URL).include_query_params(**query)
@@ -47,6 +48,28 @@ async def callback(request):
     data = response.json()
 
     # Log the user in, and redirect back to the homepage.
+    query = tables.users.select().where(tables.users.c.github_id == data["id"])
+    user = await database.fetch_one(query)
+
+    if user is None:
+        query = tables.users.insert()
+        values = {
+            "created_at": datetime.datetime.now(),
+            "last_login": datetime.datetime.now(),
+            "username": data["login"],
+            "github_id": data["id"],
+            "is_admin": False,
+            "avatar_url": data["avatar_url"],
+        }
+    else:
+        query = tables.users.update().where(tables.users.c.github_id == data["id"])
+        values = {
+            "last_login": datetime.datetime.now(),
+            "username": data["login"],
+            "avatar_url": data["avatar_url"],
+        }
+    await database.execute(query, values=values)
+
     request.session["username"] = data["login"]
     request.session["avatar_url"] = data["avatar_url"]
     url = request.url_for("dashboard")
