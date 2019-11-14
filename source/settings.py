@@ -17,7 +17,6 @@ DATABASE_URL = config(
 )
 if DATABASE_URL.dialect == "postgres":
     DATABASE_URL = DATABASE_URL.replace(dialect="postgresql")  # pragma: nocover
-    DATABASE_URL = DATABASE_URL.replace(query="min_size=8&max_size=8")  # pragma: nocover
 
 TEST_DATABASE_URL = DATABASE_URL.replace(database="test_" + DATABASE_URL.database)
 
