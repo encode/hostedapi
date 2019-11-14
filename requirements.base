@@ -13,7 +13,7 @@ databases[postgresql]==0.2.*
 jinja2==2.*
 python-multipart==0.0.5
 sentry-sdk==0.12.*
-starlette==0.12.*
+starlette==0.13.*
 typesystem==0.2.*
 uvicorn==0.10.*
 python-dotenv==0.10.*
