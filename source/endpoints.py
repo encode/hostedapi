@@ -70,6 +70,58 @@ async def dashboard(request):
     return templates.TemplateResponse(template, context, status_code=status_code)
 
 
+async def profile(request):
+    rows = []
+
+    username = request.path_params["username"]
+    query = tables.users.select().where(tables.users.c.username == username)
+    profile_user = await database.fetch_one(query)
+    if profile_user is None:
+        raise HTTPException(status_code=404)
+
+    datasources = await load_datasources(profile_user)
+
+    for datasource in datasources:
+        text = datasource.name
+        url = datasource.url
+        count = await datasource.count()
+        rows.append({"text": text, "url": url, "count": count})
+
+    if request.method == "POST":
+        form_values = await request.form()
+        validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
+        if not form_errors:
+            identity = slugify(validated_data["name"], to_lower=True)
+            query = tables.table.select().where(tables.table.c.identity == identity)
+            table = await database.fetch_one(query)
+            if table is not None:
+                form_errors = {"name": "A table with this name already exists."}
+
+        if not form_errors:
+            insert_data = dict(validated_data)
+            insert_data["created_at"] = datetime.datetime.now()
+            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
+            insert_data["user_id"] = profile_user["pk"]
+            query = tables.table.insert()
+            await database.execute(query, values=insert_data)
+            return RedirectResponse(url=request.url, status_code=303)
+        status_code = 400
+    else:
+        form_values = None
+        form_errors = None
+        status_code = 200
+
+    template = "profile.html"
+    context = {
+        "request": request,
+        "profile_user": profile_user,
+        "rows": rows,
+        "form_values": form_values,
+        "form_errors": form_errors,
+    }
+    return templates.TemplateResponse(template, context, status_code=status_code)
+
+
 async def table(request):
     PAGE_SIZE = 10
 

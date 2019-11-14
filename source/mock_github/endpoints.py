@@ -21,6 +21,7 @@ async def user(request):
         {
             "login": "tomchristie",
             "id": 123,
+            "name": "Tom Christie",
             "avatar_url": "https://avatars2.githubusercontent.com/u/647359?s=40&v=4",
         }
     )

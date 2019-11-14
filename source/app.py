@@ -22,6 +22,7 @@ routes = [
     Route("/tables/{table_id}/{row_uuid}", endpoints.detail, name="detail", methods=["GET", "POST"]),
     Route("/tables/{table_id}/{row_uuid}/delete", endpoints.delete_row, name="delete-row", methods=["POST"]),
     Route("/500", endpoints.error),
+    Route("/{username}", endpoints.profile, name="profile", methods=["GET", "POST"]),
     Mount("/static", statics, name="static"),
     Mount("/auth", routes=auth_routes, name='auth'),
 ]

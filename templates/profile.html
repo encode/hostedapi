@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main role="main">
+  <div class="container">
+    <div class="row pt-3">
+      <div class="col-md-3">
+        <img class="rounded" src="https://github.com/{{profile_user.username}}.png?size=200" width="100%" />
+        <h4 class="pt-3">{{ profile_user.name }}</h4>
+        <h6>{{ profile_user.username }}</h6>
+      </div>
+      <div class="col-md-9">
+
+        <div class="row">
+          <div class="col-md-12">
+            <div style="float: right">
+            <button class="btn btn-outline-primary" type="button" id="buttonNewTable" data-toggle="modal" data-target="#newTableModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Table</button>
+          </div>
+          </div>
+        </div>
+
+        <div class="row pt-3">
+          <div class="col-md-12">
+            {% if not rows %}
+              <p style="text-align: center; padding-top: 30px">You have not yet created any tables.</p>
+            {% else %}
+              <ul class="list-group">
+                {% for row in rows %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><a href="{{ row.url }}">{{ row.text }}</a> <span class="badge badge-primary badge-pill">{{ "{:,}".format(row.count) }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+
+<div class="modal fade" id="newTableModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">New Table</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ request.url }}" method="POST">
+        <div class="modal-body">
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label">Name</label>
+            <div class="col-sm-9">
+              <input type="text" name="name" class="form-control {% if form_errors.name %}is-invalid{% endif %}" value="{{ form_values.name }}">
+               {% if form_errors.name %}<div class="invalid-feedback">{{ form_errors.name }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-outline-primary"><span class="oi oi-check" title="icon name" aria-hidden="true"></span> Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block tail %}
+{% if form_errors %}
+<script type="text/javascript">
+  $('#newTableModal').removeClass('fade')
+  $('#newTableModal').modal('show');
+  $('#newTableModal').addClass('fade')
+</script>
+{% endif %}
+{% endblock %}

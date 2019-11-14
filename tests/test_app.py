@@ -71,6 +71,47 @@ def test_detail(client, row_uuid):
     assert response.template.name == "detail.html"
 
 
+# Table actions from a user profile
+
+
+def test_invalid_user_create_table(authenticated_client):
+    url = app.url_path_for("profile", username="tomchristie")
+    data = {"name": ""}
+    response = authenticated_client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.status_code == 400
+    assert response.context["form_errors"]["name"] == "Must not be blank."
+
+
+def test_invalid_user_create_duplicate_table(authenticated_client):
+    url = app.url_path_for("profile", username="tomchristie")
+    data = {"name": "UK General Election 2017"}
+    response = authenticated_client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.status_code == 400
+    assert (
+        response.context["form_errors"]["name"]
+        == "A table with this name already exists."
+    )
+
+
+def test_valid_user_create_table(authenticated_client):
+    url = app.url_path_for("profile", username="tomchristie")
+    data = {"name": "A new table"}
+    response = authenticated_client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+    url = app.url_path_for("profile", username="tomchristie")
+    response = authenticated_client.get(url)
+    assert response.status_code == 200
+    assert len(response.context["rows"]) == 1
+
+
 # Actions
 
 
