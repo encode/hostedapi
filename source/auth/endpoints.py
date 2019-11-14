@@ -10,7 +10,6 @@ async def login(request):
 
     query = {
         "client_id": settings.GITHUB_CLIENT_ID,
-        "scope": "user:email",
         "redirect_url": request.url_for("auth:callback"),
     }
     url = URL(GITHUB_AUTH_URL).include_query_params(**query)
