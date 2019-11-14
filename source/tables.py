@@ -23,6 +23,7 @@ table = sqlalchemy.Table(
     sqlalchemy.Column("created_at", sqlalchemy.DateTime, index=True),
     sqlalchemy.Column("identity", sqlalchemy.String, index=True),
     sqlalchemy.Column("name", sqlalchemy.String),
+    sqlalchemy.Column("user_id", sqlalchemy.Integer, index=True),
 )
 
 
@@ -60,5 +61,6 @@ users = sqlalchemy.Table(
     sqlalchemy.Column("github_id", sqlalchemy.Integer, index=True),
     sqlalchemy.Column("username", sqlalchemy.String, index=True),
     sqlalchemy.Column("is_admin", sqlalchemy.Boolean, index=True),
+    sqlalchemy.Column("name", sqlalchemy.String),
     sqlalchemy.Column("avatar_url", sqlalchemy.String),
 )

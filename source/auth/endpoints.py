@@ -59,6 +59,7 @@ async def callback(request):
             "username": data["login"],
             "github_id": data["id"],
             "is_admin": False,
+            "name": data["name"],
             "avatar_url": data["avatar_url"],
         }
     else:
@@ -66,6 +67,7 @@ async def callback(request):
         values = {
             "last_login": datetime.datetime.now(),
             "username": data["login"],
+            "name": data["name"],
             "avatar_url": data["avatar_url"],
         }
     await database.execute(query, values=values)

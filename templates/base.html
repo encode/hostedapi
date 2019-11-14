@@ -32,15 +32,13 @@
           </a>
 
           <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
-            <p class="dropdown-item">Logged in as <strong>{{ request.session.username }}</strong></p>
-            <form action={{ url_for("auth:logout") }} method="POST"><button class="dropdown-item btn-link" type="submit">Logout</button></form>
+            <p class="dropdown-header">Logged in as <strong>{{ request.session.username }}</strong></p>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="{{ url_for('profile', username=request.session.username) }}">Your profile</a>
+            <div class="dropdown-divider"></div>
+            <form action="{{ url_for('auth:logout') }}" method="POST"><button class="dropdown-item btn-link" type="submit">Logout</button></form>
           </div>
         </div>
-<!--
-        <img src="{{ request.session.avatar_url }}" class="rounded float-left" alt="{{ request.session.username }}" width=20px height=20px>
-        <form class="form-inline" action="{{ url_for('auth:logout') }}", method="POST">
-          <button class="btn btn-outline-light" type="submit">Logout</button>
-        </form>-->
         {% else %}
         <form class="form-inline" action="{{ url_for('auth:login') }}", method="POST">
           <button class="btn btn-outline-light" type="submit">Login</button>

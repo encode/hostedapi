@@ -6,8 +6,10 @@ import typesystem
 import uuid
 
 
-async def load_datasources():
+async def load_datasources(user=None):
     query = tables.table.select().order_by(tables.table.c.created_at.desc())
+    if user is not None:
+        query = query.where(tables.table.c.user_id == user["pk"])
     records = await database.fetch_all(query)
     return [TableDataSource(table) for table in records if table["identity"]]
 
