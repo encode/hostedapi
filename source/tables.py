@@ -49,3 +49,16 @@ row = sqlalchemy.Table(
     sqlalchemy.Column("data", sqlalchemy.JSON),
     sqlalchemy.Column("search_text", sqlalchemy.String),
 )
+
+
+users = sqlalchemy.Table(
+    "users",
+    metadata,
+    sqlalchemy.Column("pk", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("created_at", sqlalchemy.DateTime, index=True),
+    sqlalchemy.Column("last_login", sqlalchemy.DateTime, index=True),
+    sqlalchemy.Column("github_id", sqlalchemy.Integer, index=True),
+    sqlalchemy.Column("username", sqlalchemy.String, index=True),
+    sqlalchemy.Column("is_admin", sqlalchemy.Boolean, index=True),
+    sqlalchemy.Column("avatar_url", sqlalchemy.String),
+)

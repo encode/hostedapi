@@ -50,11 +50,9 @@ else:  # pragma: nocover
 
 
 middleware = [
-    Middleware(SentryAsgiMiddleware, enabled=settings.SENTRY_DSN),
-    Middleware(HTTPSRedirectMiddleware, enabled=settings.HTTPS_ONLY),
-    Middleware(SessionMiddleware, options={
-        'secret_key': settings.SECRET, 'https_only': settings.HTTPS_ONLY
-    })
+    Middleware(SentryAsgiMiddleware) if settings.SENTRY_DSN else None,
+    Middleware(HTTPSRedirectMiddleware) if settings.HTTPS_ONLY else None,
+    Middleware(SessionMiddleware, secret_key=settings.SECRET, https_only=settings.HTTPS_ONLY)
 ]
 
 exception_handlers = {

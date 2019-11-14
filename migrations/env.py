@@ -2,7 +2,6 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from source import settings, tables
 
 from alembic import context
 
@@ -16,6 +15,12 @@ fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
+from source import settings, tables
+
 if settings.TESTING:
     config.set_main_option('sqlalchemy.url', str(settings.TEST_DATABASE_URL))
 else:

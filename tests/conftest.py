@@ -50,3 +50,23 @@ def client():
 
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture()
+def authenticated_client(client):
+    from source.app import app
+
+    # A POST /auth/login should redirect to the github auth URL.
+    url = app.url_path_for("auth:login")
+    response = client.post(url, allow_redirects=True)
+    assert response.status_code == 200
+    assert response.template.name == "mock_github/authorize.html"
+
+    # Once the callback is made, the user should be authenticated, and end up on the homepage.
+    url = app.url_path_for("auth:callback")
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.template.name == "dashboard.html"
+    assert response.context["request"].session["username"] == "tomchristie"
+
+    return client
