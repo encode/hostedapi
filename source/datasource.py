@@ -1,21 +1,48 @@
 from starlette.exceptions import HTTPException
 from source.resources import database, url_for
 from source import tables
+from sqlalchemy.sql import select
 import datetime
 import typesystem
 import uuid
 
 
-async def load_datasources(user=None):
-    query = tables.table.select().order_by(tables.table.c.created_at.desc())
-    if user is not None:
-        query = query.where(tables.table.c.user_id == user["pk"])
+async def load_datasources():
+    query = (
+        select([tables.table] + [tables.users.c.username])
+        .select_from(tables.table.join(tables.users))
+        .order_by(tables.table.c.created_at.desc())
+    )
     records = await database.fetch_all(query)
-    return [TableDataSource(table) for table in records if table["identity"]]
+    return [
+        TableDataSource(table["username"], table)
+        for table in records
+        if table["identity"]
+    ]
 
 
-async def load_datasource_or_404(table_identity):
-    query = tables.table.select().where(tables.table.c.identity == table_identity)
+async def load_datasources_for_user(user):
+    username = user["username"]
+    query = (
+        tables.table.select()
+        .order_by(tables.table.c.created_at.desc())
+        .where(tables.table.c.user_id == user["pk"])
+    )
+    records = await database.fetch_all(query)
+    return [TableDataSource(username, table) for table in records if table["identity"]]
+
+
+async def load_datasource_or_404(username=None, table_identity=None):
+    if username is not None:
+        query = (
+            tables.table.select()
+            .select_from(tables.table.join(tables.users))
+            .where(tables.users.c.username == username)
+            .where(tables.table.c.identity == table_identity)
+        )
+    else:
+        query = tables.table.select().where(tables.table.c.identity == table_identity)
+
     table = await database.fetch_one(query)
     if table is None:
         raise HTTPException(status_code=404)
@@ -26,13 +53,14 @@ async def load_datasource_or_404(table_identity):
         .order_by(tables.column.c.position)
     )
     columns = await database.fetch_all(query)
-    return TableDataSource(table, columns)
+    return TableDataSource(username, table, columns)
 
 
 class TableDataSource:
-    def __init__(self, table, columns=None):
+    def __init__(self, username, table, columns=None):
         self.name = table["name"]
-        self.url = url_for("table", table_id=table["identity"])
+        self.url = url_for("table", username=username, table_id=table["identity"])
+        self.username = username
         self.table = table
         self.columns = columns
         self.query_limit = None
@@ -99,7 +127,7 @@ class TableDataSource:
         if self.sort_func is not None:
             rows = sorted(rows, key=self.sort_func, reverse=self.sort_reverse)
         rows = rows[self.query_offset : self.query_offset + self.query_limit]
-        return [RowDataItem(self.table, row) for row in rows]
+        return [RowDataItem(self.username, self.table, row) for row in rows]
 
     async def get(self):
         query = tables.row.select()
@@ -107,7 +135,7 @@ class TableDataSource:
         row = await database.fetch_one(query)
         if row is None:
             return
-        return RowDataItem(self.table, row)
+        return RowDataItem(self.username, self.table, row)
 
     async def create(self, values):
         insert_values = {
@@ -129,7 +157,8 @@ class TableDataSource:
 
 
 class RowDataItem:
-    def __init__(self, table, row):
+    def __init__(self, username, table, row):
+        self.username = username
         self.table = table
         self.row = row
         self.uuid = row["uuid"]
@@ -140,13 +169,19 @@ class RowDataItem:
     @property
     def url(self):
         return url_for(
-            "detail", table_id=self.table["identity"], row_uuid=self.row["uuid"]
+            "detail",
+            username=self.username,
+            table_id=self.table["identity"],
+            row_uuid=self.row["uuid"],
         )
 
     @property
     def delete_url(self):
         return url_for(
-            "delete-row", table_id=self.table["identity"], row_uuid=self.row["uuid"]
+            "delete-row",
+            username=self.username,
+            table_id=self.table["identity"],
+            row_uuid=self.row["uuid"],
         )
 
     async def update(self, values):

@@ -14,6 +14,14 @@ import httpx
 # fmt: off
 routes = [
     Route("/", endpoints.dashboard, name="dashboard", methods=["GET", "POST"]),
+    Route("/{username}/tables/{table_id}", endpoints.table, name="table", methods=["GET", "POST"]),
+    Route("/{username}/tables/{table_id}/columns", endpoints.columns, name="columns", methods=["GET", "POST"]),
+    Route("/{username}/tables/{table_id}/delete", endpoints.delete_table, name="delete-table", methods=["POST"]),
+    Route("/{username}/tables/{table_id}/upload", endpoints.upload, name="upload", methods=["POST"]),
+    Route("/{username}/tables/{table_id}/columns/{column_id}/delete", endpoints.delete_column, name="delete-column", methods=["POST"]),
+    Route("/{username}/tables/{table_id}/{row_uuid}", endpoints.detail, name="detail", methods=["GET", "POST"]),
+    Route("/{username}/tables/{table_id}/{row_uuid}/delete", endpoints.delete_row, name="delete-row", methods=["POST"]),
+
     Route("/tables/{table_id}", endpoints.table, name="table", methods=["GET", "POST"]),
     Route("/tables/{table_id}/columns", endpoints.columns, name="columns", methods=["GET", "POST"]),
     Route("/tables/{table_id}/delete", endpoints.delete_table, name="delete-table", methods=["POST"]),

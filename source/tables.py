@@ -23,7 +23,7 @@ table = sqlalchemy.Table(
     sqlalchemy.Column("created_at", sqlalchemy.DateTime, index=True),
     sqlalchemy.Column("identity", sqlalchemy.String, index=True),
     sqlalchemy.Column("name", sqlalchemy.String),
-    sqlalchemy.Column("user_id", sqlalchemy.Integer, index=True),
+    sqlalchemy.Column("user_id", sqlalchemy.ForeignKey("users.pk")),
 )
 
 

@@ -19,7 +19,7 @@ def test_login_flow(client):
     url = app.url_path_for("auth:callback")
     response = client.get(url)
     assert response.status_code == 200
-    assert response.template.name == "dashboard.html"
+    assert response.template.name == "profile.html"
     assert response.context["request"].session["username"] == "tomchristie"
 
     # A POST /auth/logout should unauthenticate the user and redirect to the homepage.
@@ -53,5 +53,5 @@ def test_authenticated_login_flow(authenticated_client):
     url = app.url_path_for("auth:callback")
     response = authenticated_client.get(url)
     assert response.status_code == 200
-    assert response.template.name == "dashboard.html"
+    assert response.template.name == "profile.html"
     assert response.context["request"].session["username"] == "tomchristie"
