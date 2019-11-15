@@ -23,6 +23,7 @@ itsdangerous==1.*
 # Testing (For consistency we still want to install these to production tho.)
 black
 pytest==5.*
+pytest-asyncio==0.10.*
 pytest-cov==2.*
 requests==2.*
 sqlalchemy_utils==0.34.*

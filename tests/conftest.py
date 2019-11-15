@@ -1,10 +1,11 @@
 import pytest
+import httpx
 from alembic import command
 from alembic.config import Config
 from starlette.config import environ
-from starlette.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy_utils import database_exists, create_database, drop_database
+from tests.client import TestClient
 
 # This sets `os.environ`, but provides some additional protection.
 # If we placed it below the application import, it would raise an error
@@ -36,7 +37,7 @@ def create_test_database():
 
 
 @pytest.fixture()
-def client():
+async def client():
     """
     When using the 'client' fixture in test cases, we'll get full database
     rollbacks between test cases:
@@ -47,27 +48,37 @@ def client():
         assert response.status_code == 200
     """
     from source.app import app
+    from source.resources import database
 
-    with TestClient(app) as client:
-        yield client
+    await database.connect()
+    try:
+        yield TestClient(app=app)
+    finally:
+        await database.disconnect()
 
 
 @pytest.fixture()
-def authenticated_client():
+async def auth_client():
     from source.app import app
+    from source.resources import database
 
-    with TestClient(app) as client:
+    await database.connect()
+    try:
+        client = TestClient(app=app)
+
         # A POST /auth/login should redirect to the github auth URL.
         url = app.url_path_for("auth:login")
-        response = client.post(url, allow_redirects=True)
+        response = await client.post(url, allow_redirects=True)
         assert response.status_code == 200
         assert response.template.name == "mock_github/authorize.html"
 
         # Once the callback is made, the user should be authenticated, and end up on the homepage.
         url = app.url_path_for("auth:callback")
-        response = client.get(url)
+        response = await client.get(url)
         assert response.status_code == 200
         assert response.template.name == "profile.html"
         assert response.context["request"].session["username"] == "tomchristie"
 
         yield client
+    finally:
+        await database.disconnect()
