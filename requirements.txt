@@ -16,7 +16,7 @@ h2==3.1.1
 hpack==3.0.0
 hstspreload==2019.11.12
 httptools==0.0.13
-httpx==0.7.6
+httpx==0.7.7
 hyperframe==5.2.0
 idna==2.8
 importlib-metadata==0.23
