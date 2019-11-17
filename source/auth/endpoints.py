@@ -74,5 +74,5 @@ async def callback(request):
 
     request.session["username"] = data["login"]
     request.session["avatar_url"] = data["avatar_url"]
-    url = request.url_for("dashboard")
+    url = request.url_for("profile", username=data["login"])
     return RedirectResponse(url, status_code=303)

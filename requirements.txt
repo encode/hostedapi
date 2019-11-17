@@ -16,7 +16,7 @@ h2==3.1.1
 hpack==3.0.0
 hstspreload==2019.11.12
 httptools==0.0.13
-httpx==0.7.6
+httpx==0.7.7
 hyperframe==5.2.0
 idna==2.8
 importlib-metadata==0.23
@@ -31,7 +31,8 @@ pluggy==0.13.0
 psycopg2-binary==2.8.4
 py==1.8.0
 pyparsing==2.4.5
-pytest==5.2.2
+pytest==5.2.3
+pytest-asyncio==0.10.0
 pytest-cov==2.8.1
 python-dateutil==2.8.1
 python-dotenv==0.10.3
