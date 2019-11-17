@@ -43,7 +43,7 @@
               <td>{{ column.name }}</td>
               <td><code>"{{ column.identity }}"</code></td>
               <td><code>{{ column.datatype }}</code></td>
-              <td><a href="#" class="oi oi-x" title="delete" aria-hidden="true" data-toggle="modal" data-target="#deleteColumnModal" data-column-name="{{ column.name }}" data-column-url="{{ url_for('delete-column', table_id=table_id, column_id=column.identity) }}"></a></td>
+              <td><a href="#" class="oi oi-x" title="delete" aria-hidden="true" data-toggle="modal" data-target="#deleteColumnModal" data-column-name="{{ column.name }}" data-column-url="{{ url_for('delete-column', username=owner, table_id=table_id, column_id=column.identity) }}"></a></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -131,7 +131,7 @@
         <p>Are you sure?</p>
       </div>
       <div class="modal-footer">
-        <form id="tableDeleteForm" action="{{ url_for('delete-table', table_id=table_id) }}" method="POST">
+        <form id="tableDeleteForm" action="{{ url_for('delete-table', username=owner, table_id=table_id) }}" method="POST">
           <button type="submit" class="btn btn-outline-danger"><span class="oi oi-x" title="details" aria-hidden="true"></span> Confirm Delete</button>
         </form>
       </div>

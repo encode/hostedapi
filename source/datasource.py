@@ -32,16 +32,13 @@ async def load_datasources_for_user(user):
     return [TableDataSource(username, table) for table in records if table["identity"]]
 
 
-async def load_datasource_or_404(username=None, table_identity=None):
-    if username is not None:
-        query = (
-            tables.table.select()
-            .select_from(tables.table.join(tables.users))
-            .where(tables.users.c.username == username)
-            .where(tables.table.c.identity == table_identity)
-        )
-    else:
-        query = tables.table.select().where(tables.table.c.identity == table_identity)
+async def load_datasource_or_404(username, table_identity):
+    query = (
+        tables.table.select()
+        .select_from(tables.table.join(tables.users))
+        .where(tables.users.c.username == username)
+        .where(tables.table.c.identity == table_identity)
+    )
 
     table = await database.fetch_one(query)
     if table is None:

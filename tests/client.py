@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class TestClient(AsyncClient):
     __test__ = False
 
-    def __init__(self, app, raise_server_exceptions=False):
+    def __init__(self, app, raise_server_exceptions=True):
         dispatch = ASGIDispatch(app=app, raise_app_exceptions=raise_server_exceptions)
         super().__init__(
             base_url="https://testserver", dispatch=dispatch,
@@ -145,7 +145,7 @@ class ASGIDispatch(AsyncDispatcher):
 
         await response_started_or_failed.wait()
 
-        if app_exc is not None and self.raise_app_exceptions:
+        if app_exc is not None and self.raise_app_exceptions:  # pragma: nocover
             await background.close(app_exc)
             raise app_exc
 
@@ -153,6 +153,7 @@ class ASGIDispatch(AsyncDispatcher):
         assert headers is not None
 
         async def on_close() -> None:
+            nonlocal app_exc
             await response_body.drain()
             await background.close(app_exc)
             if app_exc is not None and self.raise_app_exceptions:

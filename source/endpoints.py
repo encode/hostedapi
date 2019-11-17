@@ -43,37 +43,12 @@ async def dashboard(request):
             {"owner": datasource.username, "text": text, "url": url, "count": count}
         )
 
-    if request.method == "POST":
-        form_values = await request.form()
-        validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
-        if not form_errors:
-            identity = slugify(validated_data["name"], to_lower=True)
-            query = tables.table.select().where(tables.table.c.identity == identity)
-            table = await database.fetch_one(query)
-            if table is not None:
-                form_errors = {"name": "A table with this name already exists."}
-
-        if not form_errors:
-            insert_data = dict(validated_data)
-            insert_data["created_at"] = datetime.datetime.now()
-            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
-            query = tables.table.insert()
-            await database.execute(query, values=insert_data)
-            return RedirectResponse(url=request.url, status_code=303)
-        status_code = 400
-    else:
-        form_values = None
-        form_errors = None
-        status_code = 200
-
     template = "dashboard.html"
     context = {
         "request": request,
         "rows": rows,
-        "form_values": form_values,
-        "form_errors": form_errors,
     }
-    return templates.TemplateResponse(template, context, status_code=status_code)
+    return templates.TemplateResponse(template, context)
 
 
 async def profile(request):
@@ -98,7 +73,11 @@ async def profile(request):
         validated_data, form_errors = NewTableSchema.validate_or_error(form_values)
         if not form_errors:
             identity = slugify(validated_data["name"], to_lower=True)
-            query = tables.table.select().where(tables.table.c.identity == identity)
+            query = (
+                tables.table.select()
+                .where(tables.table.c.user_id == profile_user["pk"])
+                .where(tables.table.c.identity == identity)
+            )
             table = await database.fetch_one(query)
             if table is not None:
                 form_errors = {"name": "A table with this name already exists."}
@@ -132,7 +111,7 @@ async def profile(request):
 async def table(request):
     PAGE_SIZE = 10
 
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     datasource = await load_datasource_or_404(username, table_id)
 
@@ -206,7 +185,7 @@ async def table(request):
 
 
 async def columns(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     datasource = await load_datasource_or_404(username, table_id)
 
@@ -258,7 +237,7 @@ async def columns(request):
 
 
 async def delete_table(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     datasource = await load_datasource_or_404(username, table_id)
 
@@ -273,16 +252,12 @@ async def delete_table(request):
     query = tables.table.delete().where(tables.table.c.pk == datasource.table["pk"])
     await database.execute(query)
 
-    if username:
-        url = request.url_for("profile", username=username)
-    else:
-        url = request.url_for("dashboard")
-
+    url = request.url_for("profile", username=username)
     return RedirectResponse(url=url, status_code=303)
 
 
 async def upload(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     datasource = await load_datasource_or_404(username, table_id)
 
@@ -330,16 +305,12 @@ async def upload(request):
     query = tables.row.insert()
     await database.execute_many(query, row_insert_values)
 
-    if username:
-        url = request.url_for("table", username=username, table_id=table_id)
-    else:
-        url = request.url_for("table", table_id=table_id)
-
+    url = request.url_for("table", username=username, table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 
 async def delete_column(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     column_id = request.path_params["column_id"]
     datasource = await load_datasource_or_404(username, table_id)
@@ -353,16 +324,12 @@ async def delete_column(request):
     )
     await database.execute(query)
 
-    if username:
-        url = request.url_for("columns", username=username, table_id=table_id)
-    else:
-        url = request.url_for("columns", table_id=table_id)
-
+    url = request.url_for("columns", username=username, table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 
 async def detail(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
     datasource = await load_datasource_or_404(username, table_id)
@@ -401,7 +368,7 @@ async def detail(request):
 
 
 async def delete_row(request):
-    username = request.path_params.get("username")
+    username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
     datasource = await load_datasource_or_404(username, table_id)
@@ -412,11 +379,7 @@ async def delete_row(request):
 
     await item.delete()
 
-    if username:
-        url = request.url_for("table", username=username, table_id=table_id)
-    else:
-        url = request.url_for("table", table_id=table_id)
-
+    url = request.url_for("table", username=username, table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
 
 

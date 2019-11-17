@@ -31,7 +31,7 @@
       </div>
       <div class="col-md-6">
         <div style="float: right">
-        <a class="btn btn-outline-secondary" id="buttonEditColumns" href="{{ url_for('columns', table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
+        <a class="btn btn-outline-secondary" id="buttonEditColumns" href="{{ url_for('columns', username=owner, table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
         {% if table_has_columns %}
         <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
         {% endif %}
@@ -104,7 +104,7 @@
     {% endif %}
 
     {% if not table_has_columns %}
-    <form id="uploadForm" action="{{ url_for('upload', table_id=table_id) }}" method="POST" enctype="multipart/form-data">
+    <form id="uploadForm" action="{{ url_for('upload', username=owner, table_id=table_id) }}" method="POST" enctype="multipart/form-data">
       <input id="uploadInput" name="upload-file" type="file" class="file">
     </form>
     {% endif %}

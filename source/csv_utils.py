@@ -81,5 +81,6 @@ def determine_column_types(rows):
             column_types.append("string")
             fields[identity] = candidate = typesystem.String(allow_blank=True)
 
+    print(column_types, rows)
     schema = type("Schema", (typesystem.Schema,), fields)
     return column_types, schema

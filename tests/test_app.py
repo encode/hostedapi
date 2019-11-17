@@ -1,21 +1,12 @@
+from source import tables
 from source.app import app
+from source.resources import database
 from starlette.datastructures import URL
 from tests.client import TestClient
+import datetime
 import pytest
 import tempfile
-
-
-@pytest.fixture
-async def row_uuid(client):
-    # This is a bit of a fudge. Because we're using a sync client & test cases
-    # we can't easily query the database using our async APIs.
-    # We need to determine a valid row UUID for a bunch of our test cases,
-    # so we do so by making a table page request, and inspecting the returned
-    # context.
-    url = app.url_path_for("table", table_id="uk-general-election-2017")
-    response = await client.get(url)
-    assert response.status_code == 200
-    return response.context["queryset"][0].uuid
+import uuid
 
 
 @pytest.fixture
@@ -29,13 +20,188 @@ def mock_csv():
     return csv
 
 
+async def create_user():
+    query = tables.users.insert()
+    user = {
+        "created_at": datetime.datetime.now(),
+        "last_login": datetime.datetime.now(),
+        "github_id": 123,
+        "username": "tomchristie",
+        "is_admin": True,
+        "name": "Tom Christie",
+        "avatar_url": "http://example.com/avatar.jpg",
+    }
+    user["pk"] = await database.execute(query, user)
+    return user
+
+
+async def create_table(user):
+    # Create the table.
+    query = tables.table.insert()
+    table = {
+        "created_at": datetime.datetime.now(),
+        "identity": "uk-general-election-2015",
+        "name": "UK General Election 2015",
+        "user_id": user["pk"],
+    }
+    table["pk"] = await database.execute(query, table)
+
+    # Create the column layout.
+    columns = [
+        {
+            "created_at": datetime.datetime.now(),
+            "identity": "constituency",
+            "name": "Constituency",
+            "datatype": "string",
+            "table": table["pk"],
+            "position": 1,
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "identity": "surname",
+            "name": "Surname",
+            "datatype": "string",
+            "table": table["pk"],
+            "position": 2,
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "identity": "first_name",
+            "name": "First Name",
+            "datatype": "string",
+            "table": table["pk"],
+            "position": 3,
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "identity": "party",
+            "name": "Party",
+            "datatype": "string",
+            "table": table["pk"],
+            "position": 4,
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "identity": "votes",
+            "name": "Votes",
+            "datatype": "integer",
+            "table": table["pk"],
+            "position": 5,
+        },
+    ]
+    query = tables.column.insert()
+    await database.execute_many(query, columns)
+
+    rows = [
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "LUCAS",
+                "first_name": "Caroline",
+                "party": "Green",
+                "votes": 22871,
+            },
+            "search_text": "Brighton, Pavilion LUCAS Caroline Green",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "SEN",
+                "first_name": "Purna",
+                "party": "Labour",
+                "votes": 14904,
+            },
+            "search_text": "Brighton, Pavilion SEN Purna Labour",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "MITCHELL",
+                "first_name": "Clarence",
+                "party": "Conservative",
+                "votes": 12448,
+            },
+            "search_text": "Brighton, Pavilion MITCHELL Clarence Conservative",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "CARTER",
+                "first_name": "Nigel",
+                "party": "UK Independence Party",
+                "votes": 2724,
+            },
+            "search_text": "Brighton, Pavilion CARTER Nigel UK Independence Party",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "BOWERS",
+                "first_name": "Chris",
+                "party": "Liberal Democrat",
+                "votes": 1525,
+            },
+            "search_text": "Brighton, Pavilion BOWERS Chris Liberal Democrat",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "YEOMANS",
+                "first_name": "Nick",
+                "party": "Independent",
+                "votes": 116,
+            },
+            "search_text": "Brighton, Pavilion YEOMANS Nick Independent",
+        },
+        {
+            "created_at": datetime.datetime.now(),
+            "uuid": str(uuid.uuid4()),
+            "table": table["pk"],
+            "data": {
+                "constituency": "Brighton, Pavilion",
+                "surname": "PILOTT",
+                "first_name": "Howard",
+                "party": "The Socialist Party of Great Britain",
+                "votes": 88,
+            },
+            "search_text": "Brighton, Pavilion PILOTT Howard The Socialist Party of Great Britain",
+        },
+    ]
+    query = tables.row.insert()
+    await database.execute_many(query, rows)
+
+    return table, columns, rows
+
+
 @pytest.mark.asyncio
 async def test_dashboard(client):
     """
     Ensure that the dashboard renders the 'dashboard.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for("dashboard")
     response = await client.get(url)
+
     assert response.status_code == 200
     assert response.template.name == "dashboard.html"
 
@@ -45,8 +211,14 @@ async def test_table(client):
     """
     Ensure that the tabular results render the 'table.html' template.
     """
-    url = app.url_path_for("table", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "table", username=user["username"], table_id=table["identity"]
+    )
     response = await client.get(url)
+
     assert response.status_code == 200
     assert response.template.name == "table.html"
 
@@ -56,21 +228,34 @@ async def test_columns(client):
     """
     Ensure that the tabular column results render the 'columns.html' template.
     """
-    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "columns", username=user["username"], table_id=table["identity"]
+    )
     response = await client.get(url)
+
     assert response.status_code == 200
     assert response.template.name == "columns.html"
 
 
 @pytest.mark.asyncio
-async def test_detail(client, row_uuid):
+async def test_detail(client):
     """
     Ensure that the detail pages renders the 'detail.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "detail", table_id="uk-general-election-2017", row_uuid=row_uuid
+        "detail",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid=rows[0]["uuid"],
     )
     response = await client.get(url)
+
     assert response.status_code == 200
     assert response.template.name == "detail.html"
 
@@ -78,45 +263,45 @@ async def test_detail(client, row_uuid):
 # Table actions from a user profile
 
 
-@pytest.mark.asyncio
-async def test_invalid_user_create_table(auth_client):
-    url = app.url_path_for("profile", username="tomchristie")
-    data = {"name": ""}
-    response = await auth_client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
-
-    assert response.status_code == 400
-    assert response.context["form_errors"]["name"] == "Must not be blank."
-
-
-@pytest.mark.asyncio
-async def test_invalid_user_create_duplicate_table(auth_client):
-    url = app.url_path_for("profile", username="tomchristie")
-    data = {"name": "UK General Election 2017"}
-    response = await auth_client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
-
-    assert response.status_code == 400
-    assert (
-        response.context["form_errors"]["name"]
-        == "A table with this name already exists."
-    )
-
-
-@pytest.mark.asyncio
-async def test_valid_user_create_table(auth_client):
-    url = app.url_path_for("profile", username="tomchristie")
-    data = {"name": "A new table"}
-    response = await auth_client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
-
-    assert response.is_redirect
-    assert URL(response.headers["location"]).path == expected_redirect
-
-    url = app.url_path_for("profile", username="tomchristie")
-    response = await auth_client.get(url)
-    assert response.status_code == 200
-    assert len(response.context["rows"]) == 1
+# @pytest.mark.asyncio
+# async def test_invalid_user_create_table(auth_client):
+#     url = app.url_path_for("profile", username="tomchristie")
+#     data = {"name": ""}
+#     response = await auth_client.post(url, data=data, allow_redirects=False)
+#     expected_redirect = url
+#
+#     assert response.status_code == 400
+#     assert response.context["form_errors"]["name"] == "Must not be blank."
+#
+#
+# @pytest.mark.asyncio
+# async def test_invalid_user_create_duplicate_table(auth_client):
+#     url = app.url_path_for("profile", username="tomchristie")
+#     data = {"name": "UK General Election 2017"}
+#     response = await auth_client.post(url, data=data, allow_redirects=False)
+#     expected_redirect = url
+#
+#     assert response.status_code == 400
+#     assert (
+#         response.context["form_errors"]["name"]
+#         == "A table with this name already exists."
+#     )
+#
+#
+# @pytest.mark.asyncio
+# async def test_valid_user_create_table(auth_client):
+#     url = app.url_path_for("profile", username="tomchristie")
+#     data = {"name": "A new table"}
+#     response = await auth_client.post(url, data=data, allow_redirects=False)
+#     expected_redirect = url
+#
+#     assert response.is_redirect
+#     assert URL(response.headers["location"]).path == expected_redirect
+#
+#     url = app.url_path_for("profile", username="tomchristie")
+#     response = await auth_client.get(url)
+#     assert response.status_code == 200
+#     assert len(response.context["rows"]) == 1
 
 
 # Actions
@@ -124,10 +309,11 @@ async def test_valid_user_create_table(auth_client):
 
 @pytest.mark.asyncio
 async def test_invalid_create_table(client):
-    url = app.url_path_for("dashboard")
+    user = await create_user()
+
+    url = app.url_path_for("profile", username=user["username"])
     data = {"name": ""}
-    response = await client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
+    response = await client.post(url, data=data)
 
     assert response.status_code == 400
     assert response.context["form_errors"]["name"] == "Must not be blank."
@@ -135,10 +321,12 @@ async def test_invalid_create_table(client):
 
 @pytest.mark.asyncio
 async def test_invalid_create_duplicate_table(client):
-    url = app.url_path_for("dashboard")
-    data = {"name": "UK General Election 2017"}
-    response = await client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for("profile", username=user["username"])
+    data = {"name": table["name"]}
+    response = await client.post(url, data=data)
 
     assert response.status_code == 400
     assert (
@@ -149,21 +337,27 @@ async def test_invalid_create_duplicate_table(client):
 
 @pytest.mark.asyncio
 async def test_valid_create_table(client):
-    url = app.url_path_for("dashboard")
+    user = await create_user()
+    url = app.url_path_for("profile", username=user["username"])
+
     data = {"name": "A new table"}
     response = await client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
 
+    expected_redirect = url
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
 
 
 @pytest.mark.asyncio
 async def test_invalid_create_column(client):
-    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "columns", username=user["username"], table_id=table["identity"]
+    )
     data = {"name": "", "datatype": "nonsense"}
-    response = await client.post(url, data=data, allow_redirects=False)
-    expected_redirect = url
+    response = await client.post(url, data=data)
 
     assert response.status_code == 400
     assert response.context["form_errors"]["name"] == "Must not be blank."
@@ -172,9 +366,14 @@ async def test_invalid_create_column(client):
 
 @pytest.mark.asyncio
 async def test_invalid_create_duplicate_column(client):
-    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "columns", username=user["username"], table_id=table["identity"]
+    )
     data = {"name": "party", "datatype": "integer"}
-    response = await client.post(url, data=data, allow_redirects=False)
+    response = await client.post(url, data=data)
 
     assert response.status_code == 400
     assert (
@@ -185,7 +384,12 @@ async def test_invalid_create_duplicate_column(client):
 
 @pytest.mark.asyncio
 async def test_valid_create_column(client):
-    url = app.url_path_for("columns", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "columns", username=user["username"], table_id=table["identity"]
+    )
     data = {"name": "notes", "datatype": "string"}
     response = await client.post(url, data=data, allow_redirects=False)
     expected_redirect = url
@@ -195,79 +399,46 @@ async def test_valid_create_column(client):
 
 
 @pytest.mark.asyncio
-async def test_invalid_create(client):
+async def test_invalid_row_create(client):
     """
     Test an invalid row create.
     """
-    url = app.url_path_for("table", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "table", username=user["username"], table_id=table["identity"]
+    )
     data = {
         "constituency": "",
         "surname": "WALLACE",
-        "first_name": "Donna Maria",
+        "first_name": "Emma",
         "party": "Green Party",
-        "votes": 1090,
+        "votes": 846,
     }
-    response = await client.post(url, data=data, allow_redirects=False)
+    response = await client.post(url, data=data)
 
     assert response.status_code == 400
     assert response.context["form_errors"]["constituency"] == "Must not be blank."
 
 
 @pytest.mark.asyncio
-async def test_valid_create(client):
+async def test_valid_row_create(client):
     """
     Test an valid row create.
     """
-    url = app.url_path_for("table", table_id="uk-general-election-2017")
-    data = {
-        "constituency": "Aldershot",
-        "surname": "WALLACE",
-        "first_name": "Donna Maria",
-        "party": "Green Party",
-        "votes": 1090,
-    }
-    response = await client.post(url, data=data, allow_redirects=False)
-    expected_redirect = app.url_path_for("table", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
 
-    assert response.is_redirect
-    assert URL(response.headers["location"]).path == expected_redirect
-
-
-@pytest.mark.asyncio
-async def test_invalid_edit(client, row_uuid):
-    """
-    Test an invalid row edit.
-    """
     url = app.url_path_for(
-        "detail", table_id="uk-general-election-2017", row_uuid=row_uuid
+        "table", username=user["username"], table_id=table["identity"]
     )
     data = {
-        "constituency": "",
+        "constituency": "Harrow East",
         "surname": "WALLACE",
-        "first_name": "Donna Maria",
+        "first_name": "Emma",
         "party": "Green Party",
-        "votes": 1090,
-    }
-    response = await client.post(url, data=data, allow_redirects=False)
-
-    assert response.status_code == 400
-    assert response.context["form_errors"]["constituency"] == "Must not be blank."
-
-
-@pytest.mark.asyncio
-async def test_valid_edit(client, row_uuid):
-    """
-    Test row edit.
-    """
-    url = app.url_path_for(
-        "detail", table_id="uk-general-election-2017", row_uuid=row_uuid
-    )
-    data = {
-        "constituency": "Aldershot",
-        "surname": "WALLACE",
-        "first_name": "Donna Maria",
-        "party": "Green Party",
-        "votes": 1090,
+        "votes": 846,
     }
     response = await client.post(url, data=data, allow_redirects=False)
     expected_redirect = url
@@ -277,43 +448,119 @@ async def test_valid_edit(client, row_uuid):
 
 
 @pytest.mark.asyncio
-async def test_column_delete(client, row_uuid):
+async def test_invalid_edit(client):
+    """
+    Test an invalid row edit.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "detail",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid=rows[0]["uuid"],
+    )
+    data = {
+        "constituency": "",
+        "surname": "WALLACE",
+        "first_name": "Emma",
+        "party": "Green Party",
+        "votes": 846,
+    }
+    response = await client.post(url, data=data)
+
+    assert response.status_code == 400
+    assert response.context["form_errors"]["constituency"] == "Must not be blank."
+
+
+@pytest.mark.asyncio
+async def test_valid_edit(client):
+    """
+    Test row edit.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "detail",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid=rows[0]["uuid"],
+    )
+    data = {
+        "constituency": "Harrow East",
+        "surname": "WALLACE",
+        "first_name": "Emma",
+        "party": "Green Party",
+        "votes": 846,
+    }
+    response = await client.post(url, data=data, allow_redirects=False)
+    expected_redirect = url
+
+    assert response.is_redirect
+    assert URL(response.headers["location"]).path == expected_redirect
+
+
+@pytest.mark.asyncio
+async def test_column_delete(client):
     """
     Test column deletion.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "delete-column", table_id="uk-general-election-2017", column_id="party"
+        "delete-column",
+        username=user["username"],
+        table_id=table["identity"],
+        column_id=columns[0]["identity"],
     )
     response = await client.post(url, allow_redirects=False)
-    expected_redirect = app.url_path_for("columns", table_id="uk-general-election-2017")
+    expected_redirect = app.url_path_for(
+        "columns", username=user["username"], table_id=table["identity"]
+    )
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
 
 
 @pytest.mark.asyncio
-async def test_table_delete(client, row_uuid):
+async def test_table_delete(client):
     """
     Test table delete.
     """
-    url = app.url_path_for("delete-table", table_id="uk-general-election-2017")
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = app.url_path_for(
+        "delete-table", username=user["username"], table_id=table["identity"]
+    )
     response = await client.post(url, allow_redirects=False)
-    expected_redirect = app.url_path_for("dashboard")
+    expected_redirect = app.url_path_for("profile", username=user["username"])
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
 
 
 @pytest.mark.asyncio
-async def test_delete(client, row_uuid):
+async def test_delete(client):
     """
     Test row delete.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "delete-row", table_id="uk-general-election-2017", row_uuid=row_uuid
+        "delete-row",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid=rows[0]["uuid"],
     )
     response = await client.post(url, allow_redirects=False)
-    expected_redirect = app.url_path_for("table", table_id="uk-general-election-2017")
+    expected_redirect = app.url_path_for(
+        "table", username=user["username"], table_id=table["identity"]
+    )
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
@@ -321,7 +568,10 @@ async def test_delete(client, row_uuid):
 
 @pytest.mark.asyncio
 async def test_upload(client, mock_csv):
-    url = app.url_path_for("dashboard")
+    user = await create_user()
+    csv_file = open(mock_csv.name, "r")
+
+    url = app.url_path_for("profile", username=user["username"])
     data = {"name": "new table"}
     response = await client.post(url, data=data, allow_redirects=False)
     expected_redirect = url
@@ -329,11 +579,13 @@ async def test_upload(client, mock_csv):
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
 
-    url = app.url_path_for("upload", table_id="new-table")
+    url = app.url_path_for("upload", username=user["username"], table_id="new-table")
     response = await client.post(
-        url, files={"upload-file": mock_csv.name}, allow_redirects=False
+        url, files={"upload-file": csv_file}, allow_redirects=False
     )
-    expected_redirect = app.url_path_for("table", table_id="new-table")
+    expected_redirect = app.url_path_for(
+        "table", username=user["username"], table_id="new-table"
+    )
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
@@ -347,8 +599,12 @@ async def test_table_with_ordering(client):
     """
     Ensure that a column ordering renders a sorted 'table.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = (
-        app.url_path_for("table", table_id="uk-general-election-2017") + "?order=votes"
+        app.url_path_for("table", username=user["username"], table_id=table["identity"])
+        + "?order=votes"
     )
     response = await client.get(url)
     template_queryset = response.context["queryset"]
@@ -364,17 +620,20 @@ async def test_table_with_search(client):
     """
     Ensure that a column ordering renders a sorted 'table.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = (
-        app.url_path_for("table", table_id="uk-general-election-2017")
-        + "?search=tatton"
+        app.url_path_for("table", username=user["username"], table_id=table["identity"])
+        + "?search=party"
     )
     response = await client.get(url)
     template_queryset = response.context["queryset"]
-    rendered_constituency = [item["constituency"] for item in template_queryset]
+    rendered_party_names = [item["party"] for item in template_queryset]
 
     assert response.status_code == 200
     assert response.template.name == "table.html"
-    assert all([constituency == "Tatton" for constituency in rendered_constituency])
+    assert all(["party" in party_name.lower() for party_name in rendered_party_names])
 
 
 # Error handler cases
@@ -385,8 +644,13 @@ async def test_table_404(client):
     """
     Ensure that tabular pages with an invalid year render the '404.html' template.
     """
-    url = app.url_path_for("table", table_id="does-not-exist")
+    user = await create_user()
+
+    url = app.url_path_for(
+        "table", username=user["username"], table_id="does-not-exist"
+    )
     response = await client.get(url)
+
     assert response.status_code == 404
     assert response.template.name == "404.html"
 
@@ -396,10 +660,17 @@ async def test_detail_404(client):
     """
     Ensure that detail pages with an invalid PK render the '404.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "detail", table_id="uk-general-election-2017", row_uuid="does-not-exist"
+        "detail",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid="does-not-exist",
     )
     response = await client.get(url)
+
     assert response.status_code == 404
     assert response.template.name == "404.html"
 
@@ -409,8 +680,14 @@ async def test_delete_404(client):
     """
     Ensure that delete pages with an invalid PK render the '404.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "delete-row", table_id="uk-general-election-2017", row_uuid="does-not-exist"
+        "delete-row",
+        username=user["username"],
+        table_id=table["identity"],
+        row_uuid="does-not-exist",
     )
     response = await client.post(url)
     assert response.status_code == 404
@@ -422,10 +699,17 @@ async def test_column_delete_404(client):
     """
     Ensure that column delete pages with an invalid PK render the '404.html' template.
     """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
     url = app.url_path_for(
-        "delete-column", table_id="uk-general-election-2017", column_id="does-not-exist"
+        "delete-column",
+        username=user["username"],
+        table_id=table["identity"],
+        column_id="does-not-exist",
     )
     response = await client.post(url)
+
     assert response.status_code == 404
     assert response.template.name == "404.html"
 
@@ -449,3 +733,13 @@ async def test_500_server_error():
     response = await client.get("/500")  # This URL raises a deliberate exception.
     assert response.status_code == 500
     assert response.template.name == "500.html"
+
+
+@pytest.mark.asyncio
+async def test_raise_500_server_error():
+    """
+    Ensure that exceptions in the application raise through the client.
+    """
+    client = TestClient(app)
+    with pytest.raises(RuntimeError):
+        await client.get("/500")
