@@ -1,13 +1,10 @@
 This is a progress log for work on the HostedAPI service.
 
-The work is not back-to-back over a continuous period, and days listed don't
-necessarily indicate a full working day.
-
-# Day 1
+# Let's go!
 
 ### Create the GitHub repo
 
-Let's go! Get a repo setup and add a useful README.
+Get a repo setup and add a useful README.
 
 ### Setup Travis
 
@@ -29,7 +26,7 @@ If I'd been using gunicorn then the `FORWARDED_ALLOW_IPS` environment variable w
 
 Running `heroku run printenv` demonstrates that `FORWARDED_ALLOW_IPS=*` is set by default, which Gunicorn honours, but Uvicorn doesn't yet handle. It also shows that the `WEB_CONCURRENCY` environment variable is set, which Uvicorn could use to determine a default number of worker processes.
 
-# Day 2
+# Deployments
 
 ## Add test suite
 
@@ -79,7 +76,7 @@ Together with our `DEBUG` behavior this now means that:
 
 * Setup Heroku's deploy from GitHub, for auto deploys after Pull Requests are merged to master.
 
-# Day 3
+# Pagination, search, column controls
 
 ## Pass release version to Sentry
 
@@ -102,7 +99,7 @@ Only allow "Squash Merge on pull requests, so that we have a nice neat commit hi
 * Implement column ordering controls.
 * Implement search controls.
 
-# Day 4
+# Site basics
 
 ## Flesh out site structure
 
@@ -112,7 +109,7 @@ Put in place a basic admin-like site structure...
 * Add a single-item details page
 * Breadcrumbs interlinking between each layer
 
-# Day 5
+# Database
 
 ## Hook up database
 
@@ -122,7 +119,7 @@ Loads the data from a postgres database, rather than a hardcoded data source.
 * Tests run against a newly created test database on each run.
 * Individual test cases are isolated inside a transaction that rolls back at the end of each test.
 
-# Day 6
+# Editable data in tables
 
 ## Make the data editable
 
@@ -130,7 +127,7 @@ Loads the data from a postgres database, rather than a hardcoded data source.
 * Input validation using `typesystem`.
 * Persist changes to the database.
 
-# Day 7
+# Prep for dynamically defined tables
 
 ## Use dynamic table definitions
 
@@ -162,7 +159,7 @@ It's not as elegant to create new schema classes as I'd like it to be. Also I'd 
 it validating into raw dictionary data types, rather than object instances. For now I'm just
 working around these issues in the codebase.
 
-# Day 8
+# Edit columns
 
 Started implementing controls for dynamic tables. Allowing users to create new tables,
 and add or delete columns from tables.
@@ -182,7 +179,7 @@ Work driven by this on Uvicorn (logging improvements, better deployment defaults
 
 Work driven by this on Starlette (declarative routing and middleware).
 
-# Day 9
+# GitHub auth flow
 
 Implemented the GitHub authentication flow.
 
@@ -192,3 +189,32 @@ between using the live GitHub API, and using the mock application.
 
 The authentication flow currently just affects the session, and does not create
 a persistent user record.
+
+# Profile page for users
+
+Implemented a profile page for users. Added a relationship between tables and users.
+In order to stick with continuously delivering to production, pushed this without
+wiring the actual view into the login flow.
+
+Investigated an issue where migrations on production were failing with a
+"Too many connections" error. Cause appears to be that our web processes just
+happen to fully utilize the available connections. Our `asyncpg` connection pool
+defaults to opening 10 connections, and we have two web processes, so 20 connections,
+which *just happens* to also be Heroku's maximum for Postgres Hobby instances.
+As a result everything runs along happily, until we attempt to run migrations,
+which fails to open a connection.
+
+# Associate tables with users
+
+Associate tables with owner users.
+
+Implement permissions, so that users can only edit their own tables.
+
+In order to write the test cases here, we needed to switch away from just having
+pre-defined tables, created in data migrations, and instead issue database operations
+from the test cases.
+
+This means that our test cases needed to be `async`, so that we can use the `databases`
+interface from within them. In order to do this we also needed to switch the test client
+to use the AsyncClient provided by `httpx`, rather than Starlette's existing syncronous
+test client.
