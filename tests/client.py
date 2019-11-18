@@ -7,6 +7,9 @@ from httpx.config import CertTypes, TimeoutTypes, VerifyTypes
 from httpx.models import AsyncRequest, AsyncResponse
 from httpx.utils import MessageLoggerASGIMiddleware, get_logger
 from httpx.dispatch.base import AsyncDispatcher
+from base64 import b64encode
+import json
+import itsdangerous
 
 logger = get_logger(__name__)
 
@@ -15,10 +18,19 @@ class TestClient(AsyncClient):
     __test__ = False
 
     def __init__(self, app, raise_server_exceptions=True):
+        from source.settings import SECRET
+
         dispatch = ASGIDispatch(app=app, raise_app_exceptions=raise_server_exceptions)
+        self.signer = itsdangerous.TimestampSigner(SECRET)
         super().__init__(
             base_url="https://testserver", dispatch=dispatch,
         )
+
+    def login(self, user):
+        session = {"username": user["username"], "avatar_url": user["avatar_url"]}
+        data = b64encode(json.dumps(session).encode("utf-8"))
+        data = self.signer.sign(data)
+        self.cookies.set("session", data.decode("ascii"))
 
 
 class ASGIDispatch(AsyncDispatcher):

@@ -30,11 +30,17 @@ class NewColumnSchema(typesystem.Schema):
     datatype = typesystem.Choice(choices=["string", "integer"])
 
 
-async def dashboard(request):
-    rows = []
+def check_can_edit(request, username):
+    can_edit = request.session.get("username") == username
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and not can_edit:
+        raise HTTPException(status_code=403)
+    return can_edit
 
+
+async def dashboard(request):
     datasources = await load_datasources()
 
+    rows = []
     for datasource in datasources:
         text = datasource.name
         url = datasource.url
@@ -52,9 +58,9 @@ async def dashboard(request):
 
 
 async def profile(request):
-    rows = []
-
     username = request.path_params["username"]
+    can_edit = check_can_edit(request, username)
+
     query = tables.users.select().where(tables.users.c.username == username)
     profile_user = await database.fetch_one(query)
     if profile_user is None:
@@ -62,6 +68,7 @@ async def profile(request):
 
     datasources = await load_datasources_for_user(profile_user)
 
+    rows = []
     for datasource in datasources:
         text = datasource.name
         url = datasource.url
@@ -104,6 +111,7 @@ async def profile(request):
         "rows": rows,
         "form_values": form_values,
         "form_errors": form_errors,
+        "can_edit": can_edit,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -113,6 +121,7 @@ async def table(request):
 
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
 
     # datasource = ElectionDataSource(app=app, year=year)
@@ -180,6 +189,7 @@ async def table(request):
         "page_controls": page_controls,
         "form_errors": form_errors,
         "form_values": form_values,
+        "can_edit": can_edit,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -187,6 +197,7 @@ async def table(request):
 async def columns(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
 
     if request.method == "POST":
@@ -232,6 +243,7 @@ async def columns(request):
         "columns": datasource.columns,
         "form_errors": form_errors,
         "form_values": form_values,
+        "can_edit": can_edit,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -239,6 +251,7 @@ async def columns(request):
 async def delete_table(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
 
     query = tables.column.delete().where(
@@ -259,6 +272,7 @@ async def delete_table(request):
 async def upload(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
 
     form = await request.form()
@@ -313,6 +327,7 @@ async def delete_column(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     column_id = request.path_params["column_id"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
     if column_id not in datasource.schema.fields:
         raise HTTPException(status_code=404)
@@ -332,6 +347,7 @@ async def detail(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
     datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
@@ -363,6 +379,7 @@ async def detail(request):
         "item": item,
         "form_values": form_values,
         "form_errors": form_errors,
+        "can_edit": can_edit,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
@@ -371,6 +388,7 @@ async def delete_row(request):
     username = request.path_params["username"]
     table_id = request.path_params["table_id"]
     row_uuid = request.path_params["row_uuid"]
+    can_edit = check_can_edit(request, username)
     datasource = await load_datasource_or_404(username, table_id)
     datasource = datasource.filter(uuid=row_uuid)
     item = await datasource.get()
