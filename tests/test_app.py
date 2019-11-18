@@ -260,56 +260,13 @@ async def test_detail(client):
     assert response.template.name == "detail.html"
 
 
-# Table actions from a user profile
-
-
-# @pytest.mark.asyncio
-# async def test_invalid_user_create_table(auth_client):
-#     url = app.url_path_for("profile", username="tomchristie")
-#     data = {"name": ""}
-#     response = await auth_client.post(url, data=data, allow_redirects=False)
-#     expected_redirect = url
-#
-#     assert response.status_code == 400
-#     assert response.context["form_errors"]["name"] == "Must not be blank."
-#
-#
-# @pytest.mark.asyncio
-# async def test_invalid_user_create_duplicate_table(auth_client):
-#     url = app.url_path_for("profile", username="tomchristie")
-#     data = {"name": "UK General Election 2017"}
-#     response = await auth_client.post(url, data=data, allow_redirects=False)
-#     expected_redirect = url
-#
-#     assert response.status_code == 400
-#     assert (
-#         response.context["form_errors"]["name"]
-#         == "A table with this name already exists."
-#     )
-#
-#
-# @pytest.mark.asyncio
-# async def test_valid_user_create_table(auth_client):
-#     url = app.url_path_for("profile", username="tomchristie")
-#     data = {"name": "A new table"}
-#     response = await auth_client.post(url, data=data, allow_redirects=False)
-#     expected_redirect = url
-#
-#     assert response.is_redirect
-#     assert URL(response.headers["location"]).path == expected_redirect
-#
-#     url = app.url_path_for("profile", username="tomchristie")
-#     response = await auth_client.get(url)
-#     assert response.status_code == 200
-#     assert len(response.context["rows"]) == 1
-
-
 # Actions
 
 
 @pytest.mark.asyncio
 async def test_invalid_create_table(client):
     user = await create_user()
+    client.login(user)
 
     url = app.url_path_for("profile", username=user["username"])
     data = {"name": ""}
@@ -323,6 +280,7 @@ async def test_invalid_create_table(client):
 async def test_invalid_create_duplicate_table(client):
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for("profile", username=user["username"])
     data = {"name": table["name"]}
@@ -338,8 +296,9 @@ async def test_invalid_create_duplicate_table(client):
 @pytest.mark.asyncio
 async def test_valid_create_table(client):
     user = await create_user()
-    url = app.url_path_for("profile", username=user["username"])
+    client.login(user)
 
+    url = app.url_path_for("profile", username=user["username"])
     data = {"name": "A new table"}
     response = await client.post(url, data=data, allow_redirects=False)
 
@@ -349,9 +308,21 @@ async def test_valid_create_table(client):
 
 
 @pytest.mark.asyncio
+async def test_no_permissions_create_table(client):
+    user = await create_user()
+
+    url = app.url_path_for("profile", username=user["username"])
+    data = {"name": "A new table"}
+    response = await client.post(url, data=data)
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_invalid_create_column(client):
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "columns", username=user["username"], table_id=table["identity"]
@@ -368,6 +339,7 @@ async def test_invalid_create_column(client):
 async def test_invalid_create_duplicate_column(client):
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "columns", username=user["username"], table_id=table["identity"]
@@ -386,6 +358,7 @@ async def test_invalid_create_duplicate_column(client):
 async def test_valid_create_column(client):
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "columns", username=user["username"], table_id=table["identity"]
@@ -405,6 +378,7 @@ async def test_invalid_row_create(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "table", username=user["username"], table_id=table["identity"]
@@ -429,6 +403,7 @@ async def test_valid_row_create(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "table", username=user["username"], table_id=table["identity"]
@@ -454,6 +429,7 @@ async def test_invalid_edit(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "detail",
@@ -481,6 +457,7 @@ async def test_valid_edit(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "detail",
@@ -509,6 +486,7 @@ async def test_column_delete(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "delete-column",
@@ -532,6 +510,7 @@ async def test_table_delete(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "delete-table", username=user["username"], table_id=table["identity"]
@@ -550,6 +529,7 @@ async def test_delete(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "delete-row",
@@ -569,6 +549,7 @@ async def test_delete(client):
 @pytest.mark.asyncio
 async def test_upload(client, mock_csv):
     user = await create_user()
+    client.login(user)
     csv_file = open(mock_csv.name, "r")
 
     url = app.url_path_for("profile", username=user["username"])
@@ -676,12 +657,13 @@ async def test_detail_404(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_404(client):
+async def test_row_delete_404(client):
     """
-    Ensure that delete pages with an invalid PK render the '404.html' template.
+    Ensure that delete rows with an invalid PK render the '404.html' template.
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "delete-row",
@@ -701,6 +683,7 @@ async def test_column_delete_404(client):
     """
     user = await create_user()
     table, columns, rows = await create_table(user)
+    client.login(user)
 
     url = app.url_path_for(
         "delete-column",

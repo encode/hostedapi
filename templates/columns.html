@@ -17,6 +17,7 @@
       </nav>
     </div>
 
+    {% if can_edit %}
     <div class="row">
       <div class="col-md-12">
         <div style="float: right">
@@ -25,6 +26,7 @@
       </div>
       </div>
     </div>
+    {% endif %}
 
     <div class="row pt-3">
       <div class="col-md-12">
@@ -43,7 +45,9 @@
               <td>{{ column.name }}</td>
               <td><code>"{{ column.identity }}"</code></td>
               <td><code>{{ column.datatype }}</code></td>
+              {% if can_edit %}
               <td><a href="#" class="oi oi-x" title="delete" aria-hidden="true" data-toggle="modal" data-target="#deleteColumnModal" data-column-name="{{ column.name }}" data-column-url="{{ url_for('delete-column', username=owner, table_id=table_id, column_id=column.identity) }}"></a></td>
+              {% endif %}
             </tr>
             {% endfor %}
           </tbody>
@@ -59,6 +63,7 @@
   </div>
 </main>
 
+{% if can_edit %}
 <div class="modal fade" id="newColumnModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -138,6 +143,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block tail %}
