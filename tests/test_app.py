@@ -778,3 +778,44 @@ async def test_raise_500_server_error():
     client = TestClient(app)
     with pytest.raises(RuntimeError):
         await client.get("/500")
+
+
+# Exports
+
+
+@pytest.mark.asyncio
+async def test_export_json(client):
+    """
+    Ensure that tables can export as a JSON file.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = (
+        app.url_path_for("table", username=user["username"], table_id=table["identity"])
+        + "?export=json"
+    )
+    response = await client.get(url)
+
+    assert response.status_code == 200
+    assert "Content-Disposition" in response.headers
+    assert len(response.json()) == len(rows)
+
+
+@pytest.mark.asyncio
+async def test_export_csv(client):
+    """
+    Ensure that tables can export as a CSV file.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = (
+        app.url_path_for("table", username=user["username"], table_id=table["identity"])
+        + "?export=csv"
+    )
+    response = await client.get(url)
+
+    assert response.status_code == 200
+    assert "Content-Disposition" in response.headers
+    assert len(response.text.splitlines()) == len(rows) + 1

@@ -1,5 +1,5 @@
 from starlette.exceptions import HTTPException
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 from source import ordering, pagination, search, tables
 from source.resources import database, templates
 from source.datasource import (
@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 import chardet
 import csv
 import datetime
+import io
 import json
 import math
 import typesystem
@@ -146,6 +147,35 @@ async def table(request):
     # Perform column ordering
     if order_column is not None:
         datasource = datasource.order_by(column=order_column, reverse=is_reverse)
+
+    # Export
+    export = request.query_params.get("export")
+    if export == "json":
+        queryset = await datasource.all()
+        data = [
+            {
+                key: field.serialize(item.get(key))
+                for key, field in datasource.schema.fields.items()
+            }
+            for item in queryset
+        ]
+        content = json.dumps(data, indent=4)
+        headers = {"Content-Disposition": f'attachment; filename="{table_id}.json"'}
+        return Response(content, headers=headers)
+    elif export == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        queryset = await datasource.all()
+
+        headers = [field.title for field in datasource.schema.fields.values()]
+        writer.writerow(headers)
+        for item in queryset:
+            row = [item.get(key, default="") for key in datasource.schema.fields.keys()]
+            writer.writerow(row)
+
+        content = output.getvalue()
+        headers = {"Content-Disposition": f'attachment; filename="{table_id}.csv"'}
+        return Response(content, headers=headers)
 
     #  Perform pagination
     datasource = datasource.offset(offset).limit(PAGE_SIZE)
