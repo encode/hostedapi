@@ -2,6 +2,7 @@ from source import tables
 from source.app import app
 from source.resources import database
 from starlette.datastructures import URL
+from sqlalchemy import func, select
 from tests.client import TestClient
 import datetime
 import pytest
@@ -501,6 +502,37 @@ async def test_column_delete(client):
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
+
+
+@pytest.mark.asyncio
+async def test_complete_column_delete(client):
+    """
+    Deleting all columns in the table should remove all the rows.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+    client.login(user)
+
+    query = (
+        select([func.count()])
+        .select_from(tables.row)
+        .where(tables.row.c.table == table["pk"])
+    )
+    row_count = await database.fetch_val(query)
+    assert row_count > 0
+
+    for column in columns:
+        url = app.url_path_for(
+            "delete-column",
+            username=user["username"],
+            table_id=table["identity"],
+            column_id=column["identity"],
+        )
+        response = await client.post(url, allow_redirects=False)
+        assert response.is_redirect
+
+    row_count = await database.fetch_val(query)
+    assert row_count == 0
 
 
 @pytest.mark.asyncio

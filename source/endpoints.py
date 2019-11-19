@@ -13,6 +13,7 @@ from source.csv_utils import (
     determine_column_identities,
 )
 from slugify import slugify
+from sqlalchemy import func, select
 import chardet
 import csv
 import datetime
@@ -332,12 +333,27 @@ async def delete_column(request):
     if column_id not in datasource.schema.fields:
         raise HTTPException(status_code=404)
 
+    # Delete the column.
     query = (
         tables.column.delete()
         .where(tables.column.c.table == datasource.table["pk"])
         .where(tables.column.c.identity == column_id)
     )
     await database.execute(query)
+
+    # Perform a column count.
+    query = (
+        select([func.count()])
+        .select_from(tables.column)
+        .where(tables.row.c.table == datasource.table["pk"])
+    )
+    column_count = await database.fetch_val(query)
+
+    # If the final column in a table has been deleted, then we should drop
+    # all the data in the table.
+    if column_count == 0:
+        query = tables.row.delete().where(tables.row.c.table == datasource.table["pk"])
+        await database.execute(query)
 
     url = request.url_for("columns", username=username, table_id=table_id)
     return RedirectResponse(url=url, status_code=303)
