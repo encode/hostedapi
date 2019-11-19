@@ -41,13 +41,27 @@
       </div>
     </div>
     {% if table_has_columns and table_has_rows %}
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a {% if view_style == 'table' %}class="nav-link active"{% else %}class="nav-link" href="{{ request.url.remove_query_params('view') }}"{% endif %}>Tabular view</a>
+        </li>
+        <li class="nav-item">
+          <a {% if view_style == 'json' %}class="nav-link active"{% else %}class="nav-link" href="{{ request.url.include_query_params(view='json') }}"{% endif %}>JSON view</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
       <div class="row">
         <div class="col-md-12">
+          {% if view_style == "table" %}
           <table class="table">
             <thead>
               <tr>
                 {% for control in column_controls %}
-                <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
+                <th style="border-top: 0" scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
                   {% if control.url %}
                     <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
                   {% endif %}
@@ -57,7 +71,7 @@
                   {% endif %}
                 </th>
                 {% endfor %}
-                <th style="width: 20px"></th>
+                <th style="width: 20px; border-top: 0"></th>
               </tr>
             </thead>
             <tbody>
@@ -71,6 +85,9 @@
               {% endfor %}
             </tbody>
           </table>
+          {% else %}
+          <pre style="padding: 20px; font-size: 12px">{{ json_data }}</pre>
+          {% endif %}
         </div>
       </div>
       <div class="row">

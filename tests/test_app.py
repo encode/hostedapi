@@ -608,6 +608,26 @@ async def test_upload(client, mock_csv):
 
 
 @pytest.mark.asyncio
+async def test_table_with_json_view(client):
+    """
+    Ensure that tables can render a JSON view.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = (
+        app.url_path_for("table", username=user["username"], table_id=table["identity"])
+        + "?view=json"
+    )
+    response = await client.get(url)
+    json_data = response.context["json_data"]
+
+    assert response.status_code == 200
+    assert response.template.name == "table.html"
+    assert len(json_data) > 0
+
+
+@pytest.mark.asyncio
 async def test_table_with_ordering(client):
     """
     Ensure that a column ordering renders a sorted 'table.html' template.
