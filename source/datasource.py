@@ -123,7 +123,8 @@ class TableDataSource:
         rows = await database.fetch_all(query)
         if self.sort_func is not None:
             rows = sorted(rows, key=self.sort_func, reverse=self.sort_reverse)
-        rows = rows[self.query_offset : self.query_offset + self.query_limit]
+        if self.query_offset is not None and self.query_limit is not None:
+            rows = rows[self.query_offset : self.query_offset + self.query_limit]
         return [RowDataItem(self.username, self.table, row) for row in rows]
 
     async def get(self):
@@ -163,8 +164,8 @@ class RowDataItem:
     def __getitem__(self, key):
         return self.row["data"][key]
 
-    def get(self, key):
-        return self.row["data"].get(key)
+    def get(self, key, default=None):
+        return self.row["data"].get(key, default)
 
     @property
     def url(self):
