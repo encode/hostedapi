@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 import chardet
 import csv
 import datetime
+import json
 import math
 import typesystem
 import uuid
@@ -173,6 +174,21 @@ async def table(request):
         form_errors = None
         status_code = 200
 
+    view_style = request.query_params.get("view")
+    if view_style not in ("json", "table"):
+        view_style = "table"
+
+    json_data = None
+    if view_style == "json":
+        data = [
+            {
+                key: field.serialize(item.get(key))
+                for key, field in datasource.schema.fields.items()
+            }
+            for item in queryset
+        ]
+        json_data = json.dumps(data, indent=4)
+
     # Render the page
     template = "table.html"
     context = {
@@ -185,6 +201,8 @@ async def table(request):
         "table_has_columns": bool(datasource.schema.fields),
         "table_has_rows": search_term or list(queryset),
         "queryset": queryset,
+        "json_data": json_data,
+        "view_style": view_style,
         "search_term": search_term,
         "column_controls": column_controls,
         "page_controls": page_controls,

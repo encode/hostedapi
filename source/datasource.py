@@ -163,6 +163,9 @@ class RowDataItem:
     def __getitem__(self, key):
         return self.row["data"][key]
 
+    def get(self, key):
+        return self.row["data"].get(key)
+
     @property
     def url(self):
         return url_for(
