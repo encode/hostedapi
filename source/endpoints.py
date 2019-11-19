@@ -182,7 +182,7 @@ async def table(request):
     if view_style == "json":
         data = [
             {
-                key: field.serialize(item[key])
+                key: field.serialize(item.get(key))
                 for key, field in datasource.schema.fields.items()
             }
             for item in queryset
