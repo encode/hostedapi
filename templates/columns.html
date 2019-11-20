@@ -4,6 +4,7 @@
 <main role="main">
   <div class="container">
     <div class="row pt-3">
+      <div style="padding: 0 15px">
       <nav>
         <ol class="breadcrumb">
           {% if owner %}
@@ -12,9 +13,10 @@
             <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
           {% endif %}
           <li class="breadcrumb-item"><a href="{{ table_url }}">{{ table_name }}</a></li>
-          <li class="breadcrumb-item active">Edit Columns</li>
+          <li class="breadcrumb-item active">Table Settings</li>
         </ol>
       </nav>
+      </div>
     </div>
 
     {% if can_edit %}

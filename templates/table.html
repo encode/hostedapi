@@ -4,17 +4,22 @@
 <main role="main">
   <div class="container">
     <div class="row pt-3">
-      <div style="padding: 0 15px">
-      <nav>
-        <ol class="breadcrumb">
-          {% if owner %}
-            <li class="breadcrumb-item"><a href="{{ url_for('profile', username=owner) }}">{{ owner }}</a></li>
-          {% else %}
-            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-          {% endif %}
-          <li class="breadcrumb-item active">{{ table_name }}</li>
-        </ol>
-      </nav>
+      <div style="padding: 0 15px; margin-bottom: -15px">
+        <nav>
+          <ol class="breadcrumb">
+            {% if owner %}
+              <li class="breadcrumb-item"><a href="{{ url_for('profile', username=owner) }}">{{ owner }}</a></li>
+            {% else %}
+              <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% endif %}
+            <li class="breadcrumb-item active">{{ table_name }}</li>
+          </ol>
+        </nav>
+      </div>
+      <div style="flex: 1; padding: 15px 15px 20px 15px">
+        <div style="float: right">
+        <a href="#"><span class="oi oi-book" title="icon name" aria-hidden="true"></span> API Documentation</a>
+        </div>
       </div>
     </div>
 
@@ -31,16 +36,16 @@
           </form>
           {% endif %}
       </div>
+      {% if can_edit %}
       <div class="col-md-6" style="height: 54px">
-        {% if can_edit %}
           <div style="float: right">
-          <a class="btn btn-outline-secondary" id="buttonEditColumns" href="{{ url_for('columns', username=owner, table_id=table_id) }}"><span class="oi oi-pencil" title="icon name" aria-hidden="true"></span> Edit Columns</a>
+          <a class="btn btn-outline-secondary" id="buttonEditColumns" href="{{ url_for('columns', username=owner, table_id=table_id) }}"><span class="oi oi-cog" title="icon name" aria-hidden="true"></span> Table Settings</a>
           {% if table_has_columns %}
           <button class="btn btn-outline-primary" type="button" id="buttonNewRow" data-toggle="modal" data-target="#newRowModal"><span class="oi oi-plus" title="icon name" aria-hidden="true"></span> New Row</button>
           {% endif %}
           </div>
-        {% endif %}
       </div>
+      {% endif %}
     </div>
     {% if table_has_columns and table_has_rows %}
 
