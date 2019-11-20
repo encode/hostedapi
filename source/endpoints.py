@@ -1,5 +1,5 @@
 from starlette.exceptions import HTTPException
-from starlette.responses import RedirectResponse, Response
+from starlette.responses import RedirectResponse, Response, JSONResponse
 from source import ordering, pagination, search, tables
 from source.resources import database, templates
 from source.datasource import (
@@ -7,6 +7,7 @@ from source.datasource import (
     load_datasources_for_user,
     load_datasource_or_404,
 )
+from source.negotiation import negotiate
 from source.csv_utils import (
     normalize_table,
     determine_column_types,
@@ -204,12 +205,15 @@ async def table(request):
         form_errors = None
         status_code = 200
 
+    accept = request.headers.get("Accept", "*/*")
+    media_type = negotiate(accept, ["application/json", "text/html"])
+
     view_style = request.query_params.get("view")
     if view_style not in ("json", "table"):
         view_style = "table"
 
     json_data = None
-    if view_style == "json":
+    if view_style == "json" or media_type == "application/json":
         data = [
             {
                 key: field.serialize(item.get(key))
@@ -217,6 +221,8 @@ async def table(request):
             }
             for item in queryset
         ]
+        if media_type == "application/json":
+            return JSONResponse(data)
         json_data = json.dumps(data, indent=4)
 
     # Render the page
@@ -432,16 +438,21 @@ async def detail(request):
         form_errors = None
         status_code = 200
 
+    accept = request.headers.get("Accept", "*/*")
+    media_type = negotiate(accept, ["application/json", "text/html"])
+
     view_style = request.query_params.get("view")
     if view_style not in ("json", "table"):
         view_style = "table"
 
     json_data = None
-    if view_style == "json":
+    if view_style == "json" or media_type == "application/json":
         data = {
             key: field.serialize(item.get(key))
             for key, field in datasource.schema.fields.items()
         }
+        if media_type == "application/json":
+            return JSONResponse(data)
         json_data = json.dumps(data, indent=4)
 
     # Render the page
