@@ -50,9 +50,15 @@ else:  # pragma: nocover
     GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize'
 
 
-middleware = [
-    Middleware(SentryAsgiMiddleware) if settings.SENTRY_DSN else None,
-    Middleware(HTTPSRedirectMiddleware) if settings.HTTPS_ONLY else None,
+middleware = []
+
+if settings.SENTRY_DSN:  # pragma: nocover
+    middleware += [Middleware(SentryAsgiMiddleware)]
+
+if settings.HTTPS_ONLY:  # pragma: nocover
+    middleware += [Middleware(HTTPSRedirectMiddleware)]
+
+middleware += [
     Middleware(SessionMiddleware, secret_key=settings.SECRET, https_only=settings.HTTPS_ONLY)
 ]
 

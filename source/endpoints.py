@@ -222,7 +222,7 @@ async def table(request):
             for item in queryset
         ]
         if media_type == "application/json":
-            return JSONResponse(data)
+            return JSONResponse(data, headers={"Access-Control-Allow-Origin": "*"})
         json_data = json.dumps(data, indent=4)
 
     # Render the page
@@ -452,7 +452,7 @@ async def detail(request):
             for key, field in datasource.schema.fields.items()
         }
         if media_type == "application/json":
-            return JSONResponse(data)
+            return JSONResponse(data, headers={"Access-Control-Allow-Origin": "*"})
         json_data = json.dumps(data, indent=4)
 
     # Render the page
