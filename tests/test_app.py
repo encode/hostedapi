@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 from tests.client import TestClient
 import datetime
 import pytest
+import json
 import tempfile
 import uuid
 
@@ -624,7 +625,32 @@ async def test_table_with_json_view(client):
 
     assert response.status_code == 200
     assert response.template.name == "table.html"
-    assert len(json_data) > 0
+    assert len(json.loads(json_data)) > 0
+
+
+@pytest.mark.asyncio
+async def test_details_with_json_view(client):
+    """
+    Ensure that detail pages can render a JSON view.
+    """
+    user = await create_user()
+    table, columns, rows = await create_table(user)
+
+    url = (
+        app.url_path_for(
+            "detail",
+            username=user["username"],
+            table_id=table["identity"],
+            row_uuid=rows[0]["uuid"],
+        )
+        + "?view=json"
+    )
+    response = await client.get(url)
+    json_data = response.context["json_data"]
+
+    assert response.status_code == 200
+    assert response.template.name == "detail.html"
+    assert len(json.loads(json_data).keys()) > 0
 
 
 @pytest.mark.asyncio
