@@ -68,11 +68,11 @@
       <div class="row">
         <div class="col-md-12">
           {% if view_style == "table" %}
-          <table class="table">
+          <table class="table dataset-list">
             <thead>
               <tr>
                 {% for control in column_controls %}
-                <th style="border-top: 0" scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
+                <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
                   {% if control.url %}
                     <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
                   {% endif %}
@@ -82,7 +82,7 @@
                   {% endif %}
                 </th>
                 {% endfor %}
-                <th style="width: 20px; border-top: 0"></th>
+                <th style="width: 20px"></th>
               </tr>
             </thead>
             <tbody>

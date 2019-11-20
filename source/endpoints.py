@@ -432,6 +432,18 @@ async def detail(request):
         form_errors = None
         status_code = 200
 
+    view_style = request.query_params.get("view")
+    if view_style not in ("json", "table"):
+        view_style = "table"
+
+    json_data = None
+    if view_style == "json":
+        data = {
+            key: field.serialize(item.get(key))
+            for key, field in datasource.schema.fields.items()
+        }
+        json_data = json.dumps(data, indent=4)
+
     # Render the page
     template = "detail.html"
     context = {
@@ -444,6 +456,8 @@ async def detail(request):
         "form_values": form_values,
         "form_errors": form_errors,
         "can_edit": can_edit,
+        "view_style": view_style,
+        "json_data": json_data,
     }
     return templates.TemplateResponse(template, context, status_code=status_code)
 
