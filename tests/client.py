@@ -23,7 +23,9 @@ class TestClient(AsyncClient):
         dispatch = ASGIDispatch(app=app, raise_app_exceptions=raise_server_exceptions)
         self.signer = itsdangerous.TimestampSigner(SECRET)
         super().__init__(
-            base_url="https://testserver", dispatch=dispatch,
+            base_url="https://testserver",
+            dispatch=dispatch,
+            headers={"accept": "text/html; */*"},
         )
 
     def login(self, user):
