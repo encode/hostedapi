@@ -31,7 +31,7 @@ class NewTableSchema(typesystem.Schema):
 
 class NewColumnSchema(typesystem.Schema):
     name = typesystem.String(max_length=100)
-    datatype = typesystem.Choice(choices=["string", "integer"])
+    datatype = typesystem.Choice(choices=["string", "integer", "float", "boolean"])
 
 
 def check_can_edit(request, username):

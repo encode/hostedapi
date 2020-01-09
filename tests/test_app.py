@@ -14,10 +14,10 @@ import uuid
 @pytest.fixture
 def mock_csv():
     csv = tempfile.NamedTemporaryFile()
-    csv.write(b"name,score\n")
-    csv.write(b"tom,123\n")
-    csv.write(b"lucy,456\n")
-    csv.write(b"rose,789\n")
+    csv.write(b"name,score,is_admin,float\n")
+    csv.write(b"tom,123,true,1.2\n")
+    csv.write(b"lucy,456,false,3\n")
+    csv.write(b"rose,789,true,4.5\n")
     csv.seek(0)
     return csv
 
@@ -603,6 +603,16 @@ async def test_upload(client, mock_csv):
 
     assert response.is_redirect
     assert URL(response.headers["location"]).path == expected_redirect
+
+    url = response.headers["location"]
+    response = await client.get(url, headers={"Accept": "application/json"})
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {"name": "tom", "score": 123, "is_admin": True, "float": 1.2},
+        {"name": "lucy", "score": 456, "is_admin": False, "float": 3.0},
+        {"name": "rose", "score": 789, "is_admin": True, "float": 4.5},
+    ]
 
 
 # Filters

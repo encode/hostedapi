@@ -78,6 +78,12 @@ class TableDataSource:
                     fields[column["identity"]] = typesystem.Integer(
                         title=column["name"]
                     )
+                elif column["datatype"] == "float":
+                    fields[column["identity"]] = typesystem.Float(title=column["name"])
+                elif column["datatype"] == "boolean":
+                    fields[column["identity"]] = typesystem.Boolean(
+                        title=column["name"]
+                    )
             self.schema = type("Schema", (typesystem.Schema,), fields)
 
     def limit(self, limit):

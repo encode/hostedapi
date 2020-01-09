@@ -58,13 +58,17 @@ def normalize_table(rows):
 
 
 def determine_column_identities(rows):
-    return [slugify(name, to_lower=True) for name in rows[0]]
+    return [slugify(name, to_lower=True, separator="_") for name in rows[0]]
 
 
 def determine_column_types(rows):
     identities = determine_column_identities(rows)
 
-    candidate_types = [("integer", typesystem.Integer(allow_null=True))]
+    candidate_types = [
+        ("float", typesystem.Float(allow_null=True)),
+        ("integer", typesystem.Integer(allow_null=True)),
+        ("boolean", typesystem.Boolean(allow_null=True)),
+    ]
     column_types = []
     fields = {}
     for idx, identity in enumerate(identities):
