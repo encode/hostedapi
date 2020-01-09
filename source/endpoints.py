@@ -259,7 +259,7 @@ async def columns(request):
         form_values = await request.form()
         validated_data, form_errors = NewColumnSchema.validate_or_error(form_values)
         if not form_errors:
-            identity = slugify(validated_data["name"], to_lower=True)
+            identity = slugify(validated_data["name"], separator="_", to_lower=True)
             query = (
                 tables.column.select()
                 .where(tables.column.c.table == datasource.table["pk"])
@@ -276,7 +276,9 @@ async def columns(request):
             insert_data = dict(validated_data)
             insert_data["table"] = datasource.table["pk"]
             insert_data["created_at"] = datetime.datetime.now()
-            insert_data["identity"] = slugify(insert_data["name"], to_lower=True)
+            insert_data["identity"] = slugify(
+                insert_data["name"], separator="_", to_lower=True
+            )
             insert_data["position"] = position
             query = tables.column.insert()
             await database.execute(query, values=insert_data)
