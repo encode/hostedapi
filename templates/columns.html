@@ -88,6 +88,8 @@
               <select name="datatype" class="custom-select {% if form_errors.datatype %}is-invalid{% endif %}">
                 <option value="string" {% if form_values.datatype == 'string' %}selected{% endif %}>string</option>
                 <option value="integer" {% if form_values.datatype == 'integer' %}selected{% endif %}>integer</option>
+                <option value="float" {% if form_values.datatype == 'float' %}selected{% endif %}>float</option>
+                <option value="boolean" {% if form_values.datatype == 'boolean' %}selected{% endif %}>boolean</option>
               </select>
                {% if form_errors.datatype %}<div class="invalid-feedback">{{ form_errors.datatype }}</div>{% endif %}
             </div>
