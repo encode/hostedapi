@@ -68,7 +68,7 @@
   </div>
 
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-12" id="websocketTarget">
           {% if view_style == "table" %}
           <table class="table dataset-list">
             <thead>
@@ -187,6 +187,11 @@ $("#uploadInput").fileinput({
     $("#uploadForm").submit();
 });
 
+var websocket = new WebSocket("{{ websocket_url }}");
+
+websocket.onmessage = function (event) {
+  document.getElementById("websocketTarget").innerHTML = event.data;
+};
 </script>
 
 {% if form_errors %}

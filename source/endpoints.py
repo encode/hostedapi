@@ -1,7 +1,7 @@
 from starlette.exceptions import HTTPException
 from starlette.responses import RedirectResponse, Response, JSONResponse
 from source import ordering, pagination, search, tables
-from source.resources import database, templates
+from source.resources import database, broadcast, templates
 from source.datasource import (
     load_datasources,
     load_datasources_for_user,
@@ -198,6 +198,7 @@ async def table(request):
         validated_data, form_errors = datasource.validate(form_values)
         if not form_errors:
             await datasource.create(values=validated_data)
+            await broadcast.publish(f"{username}/{table_id}", "Added row")
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
@@ -225,6 +226,10 @@ async def table(request):
             return JSONResponse(data, headers={"Access-Control-Allow-Origin": "*"})
         json_data = json.dumps(data, indent=4)
 
+    websocket_url = (
+        str(request.url).replace("http://", "ws://").replace("https://", "wss://")
+    )
+
     # Render the page
     template = "table.html"
     context = {
@@ -234,6 +239,7 @@ async def table(request):
         "table_id": table_id,
         "table_name": datasource.name,
         "table_url": datasource.url,
+        "websocket_url": websocket_url,
         "table_has_columns": bool(datasource.schema.fields),
         "table_has_rows": search_term or list(queryset),
         "queryset": queryset,
@@ -282,6 +288,7 @@ async def columns(request):
             insert_data["position"] = position
             query = tables.column.insert()
             await database.execute(query, values=insert_data)
+            await broadcast.publish(f"{username}/{table_id}", "Added column")
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
@@ -412,6 +419,7 @@ async def delete_column(request):
         await database.execute(query)
 
     url = request.url_for("columns", username=username, table_id=table_id)
+    await broadcast.publish(f"{username}/{table_id}", "Deleted column")
     return RedirectResponse(url=url, status_code=303)
 
 
@@ -431,6 +439,7 @@ async def detail(request):
         validated_data, form_errors = datasource.validate(form_values)
         if not form_errors:
             await item.update(values=validated_data)
+            await broadcast.publish(f"{username}/{table_id}", "Updated row")
             return RedirectResponse(url=request.url, status_code=303)
         status_code = 400
     else:
@@ -489,6 +498,7 @@ async def delete_row(request):
     await item.delete()
 
     url = request.url_for("table", username=username, table_id=table_id)
+    await broadcast.publish(f"{username}/{table_id}", "Deleted row")
     return RedirectResponse(url=url, status_code=303)
 
 
