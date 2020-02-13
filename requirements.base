@@ -7,6 +7,7 @@
 
 # Application
 aiofiles==0.4.*
+asyncio_redis==0.15.*
 alembic==1.*
 awesome-slugify==1.*
 databases[postgresql]==0.2.*
@@ -17,7 +18,7 @@ starlette==0.13.*
 typesystem==0.2.*
 uvicorn==0.10.*
 python-dotenv==0.10.*
-httpx==0.7.*
+httpx==0.11.*
 itsdangerous==1.*
 
 # Testing (For consistency we still want to install these to production tho.)
