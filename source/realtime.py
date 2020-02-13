@@ -12,7 +12,7 @@ async def ws_table(websocket):
     task = asyncio.create_task(ws_table_listener(websocket))
     while True:
         message = await websocket.receive()
-        if message['type'] == "websocket.disconnect":
+        if message["type"] == "websocket.disconnect":
             break
     task.cancel()
     await websocket.close()
@@ -30,11 +30,15 @@ async def ws_table_listener(websocket):
             datasource = await load_datasource_or_404(username, table_id)
 
             # datasource = ElectionDataSource(app=app, year=year)
-            columns = {key: field.title for key, field in datasource.schema.fields.items()}
+            columns = {
+                key: field.title for key, field in datasource.schema.fields.items()
+            }
 
             # Get some normalised information from URL query parameters
             current_page = pagination.get_page_number(url=websocket.url)
-            order_column, is_reverse = ordering.get_ordering(url=websocket.url, columns=columns)
+            order_column, is_reverse = ordering.get_ordering(
+                url=websocket.url, columns=columns
+            )
             search_term = search.get_search_term(url=websocket.url)
 
             # Filter by any search term
@@ -48,7 +52,9 @@ async def ws_table_listener(websocket):
 
             # Perform column ordering
             if order_column is not None:
-                datasource = datasource.order_by(column=order_column, reverse=is_reverse)
+                datasource = datasource.order_by(
+                    column=order_column, reverse=is_reverse
+                )
 
             #  Perform pagination
             datasource = datasource.offset(offset).limit(PAGE_SIZE)
@@ -82,12 +88,14 @@ async def ws_table_listener(websocket):
                 json_data = json.dumps(data, indent=4)
 
             template = templates.get_template("ws_table.html")
-            html = template.render({
-                "schema": datasource.schema,
-                "queryset": queryset,
-                "json_data": json_data,
-                "view_style": view_style,
-                "column_controls": column_controls,
-                "page_controls": page_controls,
-            })
+            html = template.render(
+                {
+                    "schema": datasource.schema,
+                    "queryset": queryset,
+                    "json_data": json_data,
+                    "view_style": view_style,
+                    "column_controls": column_controls,
+                    "page_controls": page_controls,
+                }
+            )
             await websocket.send_text(html)

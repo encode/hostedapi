@@ -226,7 +226,9 @@ async def table(request):
             return JSONResponse(data, headers={"Access-Control-Allow-Origin": "*"})
         json_data = json.dumps(data, indent=4)
 
-    websocket_url = str(request.url).replace('http://', 'ws://').replace('https://', 'wss://')
+    websocket_url = (
+        str(request.url).replace("http://", "ws://").replace("https://", "wss://")
+    )
 
     # Render the page
     template = "table.html"
