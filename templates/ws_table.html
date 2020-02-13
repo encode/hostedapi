@@ -1,0 +1,32 @@
+    {% if view_style == "table" %}
+    <table class="table dataset-list">
+      <thead>
+        <tr>
+          {% for control in column_controls %}
+          <th scope="col" {% if control.is_reverse_sorted %}class="dropup"{% endif %}>
+            {% if control.url %}
+              <a {% if control.is_sorted %}class="dropdown-toggle"{% endif %} href="{{ control.url }}">
+            {% endif %}
+            {{ control.text }}
+            {% if control.url %}
+              </a>
+            {% endif %}
+          </th>
+          {% endfor %}
+          <th style="width: 20px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in queryset %}
+        <tr>
+          {% for key in schema.fields.keys() %}
+            <td>{{ item[key] }}</td>
+          {% endfor %}
+          <td><a href="{{ item.url }}" class="oi oi-chevron-right" title="icon name" aria-hidden="true"></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <pre style="padding: 20px; font-size: 12px">{{ json_data }}</pre>
+    {% endif %}

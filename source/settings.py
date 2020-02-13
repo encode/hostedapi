@@ -1,4 +1,5 @@
 from starlette.config import Config
+from starlette.datastructures import URL
 import databases
 import sentry_sdk
 
@@ -19,6 +20,8 @@ if DATABASE_URL.dialect == "postgres":
     DATABASE_URL = DATABASE_URL.replace(dialect="postgresql")  # pragma: nocover
 
 TEST_DATABASE_URL = DATABASE_URL.replace(database="test_" + DATABASE_URL.database)
+
+REDIS_URL = config("REDIS_URL", cast=URL, default="redis://localhost:6379")
 
 
 # GitHub API

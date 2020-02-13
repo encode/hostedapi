@@ -1,6 +1,7 @@
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from source import settings
+from source.broadcast import Broadcast
 import databases
 import httpx
 
@@ -13,6 +14,8 @@ if settings.TESTING:
     database = databases.Database(settings.TEST_DATABASE_URL, force_rollback=True)
 else:  # pragma: nocover
     database = databases.Database(settings.DATABASE_URL)
+
+broadcast = Broadcast(settings.REDIS_URL)
 
 
 def url_for(*args, **kwargs):

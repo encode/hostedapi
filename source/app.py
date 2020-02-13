@@ -1,11 +1,11 @@
 from starlette.applications import Starlette
-from starlette.routing import Router, Route, Mount
+from starlette.routing import Router, Route, Mount, WebSocketRoute
 from starlette.middleware import Middleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from source import endpoints, settings
-from source.resources import database, statics, templates
+from source import endpoints, realtime, settings
+from source.resources import broadcast, database, statics, templates
 from source.auth.routes import routes as auth_routes
 from source.mock_github.routes import routes as github_routes
 import httpx
@@ -23,6 +23,7 @@ routes = [
     Route("/{username}/tables/{table_id}/columns/{column_id}/delete", endpoints.delete_column, name="delete-column", methods=["POST"]),
     Route("/{username}/tables/{table_id}/{row_uuid}", endpoints.detail, name="detail", methods=["GET", "POST"]),
     Route("/{username}/tables/{table_id}/{row_uuid}/delete", endpoints.delete_row, name="delete-row", methods=["POST"]),
+    WebSocketRoute("/{username}/tables/{table_id}", realtime.ws_table),
     Mount("/static", statics, name="static"),
     Mount("/auth", routes=auth_routes, name='auth'),
 ]
@@ -72,6 +73,6 @@ app = Starlette(
     routes=routes,
     middleware=middleware,
     exception_handlers=exception_handlers,
-    on_startup=[database.connect],
-    on_shutdown=[database.disconnect],
+    on_startup=[database.connect, broadcast.connect],
+    on_shutdown=[database.disconnect, broadcast.disconnect],
 )
