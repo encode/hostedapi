@@ -22,7 +22,7 @@ The service is deployed to http://hostedapi.herokuapp.com/
 
 Requirements:
 
-* [Python 3.7](https://www.python.org/downloads/)
+* [Python 3.8](https://www.python.org/downloads/)
 * [Postgres](https://www.postgresql.org/download/) (For Mac, I'd recommend [Postgres.app](https://postgresapp.com/))
 
 To install and run the application:
